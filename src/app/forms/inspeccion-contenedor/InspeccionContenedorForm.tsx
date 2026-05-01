@@ -9,8 +9,8 @@ interface Props { userId: string; userEmail: string }
 function Section({ num, icon, title, children }: { num: number; icon: string; title: string; children: React.ReactNode }) {
   return (
     <div style={{ background: '#fff', border: '1px solid #D0D9E8', borderRadius: 12, boxShadow: '0 2px 8px rgba(11,29,58,0.08)', marginBottom: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #D0D9E8', display: 'flex', alignItems: 'center', gap: 10, background: 'linear-gradient(90deg,#F0F5FF 0%,white 100%)' }}>
-        <div style={{ width: 24, height: 24, background: '#0B1D3A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{num}</div>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #D0D9E8', display: 'flex', alignItems: 'center', gap: 10, background: 'linear-gradient(90deg,#FFF7F4 0%,white 100%)' }}>
+        <div style={{ width: 24, height: 24, background: '#F05A28', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{num}</div>
         <span style={{ fontSize: 15 }}>{icon}</span>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#0B1D3A' }}>{title}</span>
       </div>
@@ -297,10 +297,16 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
     <form onSubmit={handleSubmit} style={{ maxWidth: 680, margin: '0 auto', padding: '16px 16px 80px', fontFamily: 'Outfit, sans-serif' }}>
 
       {/* Botón volver */}
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 12 }}>
         <a href="/forms" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0B1D3A', textDecoration: 'none' }}>
           ← Volver a formularios
         </a>
+      </div>
+
+      {/* Título del formulario */}
+      <div style={{ marginBottom: 16 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: '#0B1D3A', margin: 0 }}>Inspección de Contenedores</h1>
+        <p style={{ fontSize: 12, color: '#7A90B0', margin: '4px 0 0', fontWeight: 500 }}>Control antinarcóticos, sellos y unidad canina</p>
       </div>
 
       {/* Barra de progreso */}

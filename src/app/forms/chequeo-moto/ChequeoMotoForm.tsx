@@ -124,11 +124,30 @@ export default function ChequeoMotoForm({ userId }: Props) {
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 680, margin: '0 auto', padding: '16px 16px 80px', fontFamily: 'Outfit, sans-serif' }}>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 12 }}>
         <a href="/forms" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0B1D3A', textDecoration: 'none' }}>
           ← Volver a formularios
         </a>
       </div>
+
+      {/* Título */}
+      <div style={{ marginBottom: 12 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: '#0B1D3A', margin: 0 }}>Chequeo de Moto</h1>
+        <p style={{ fontSize: 12, color: '#7A90B0', margin: '4px 0 0', fontWeight: 500 }}>Revisión técnica de motocicleta operativa (27 ítems)</p>
+      </div>
+
+      {/* Progreso */}
+      {(() => { const req = [f.placaUnidad, f.cedulaAgente, f.nombreAgente, f.placaMoto, f.kmInicial]; const p = Math.round(req.filter(Boolean).length / req.length * 100); return (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#7A90B0' }}>PROGRESO</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#0B1D3A' }}>{p}%</span>
+          </div>
+          <div style={{ height: 6, background: '#D0D9E8', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${p}%`, background: p === 100 ? '#15803D' : '#F05A28', borderRadius: 99, transition: 'width 0.3s ease' }} />
+          </div>
+        </div>
+      )})()}
 
       <Section num={1} icon="👤" title="Datos del Agente">
         <G2>
