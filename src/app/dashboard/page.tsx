@@ -15,8 +15,8 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  // Si es guardia, redirigir a formularios
-  if (profile?.role === 'guard') redirect('/forms')
+  // Si es guardia o no tiene perfil definido, redirigir a formularios
+  if (!profile || profile?.role === 'guard') redirect('/forms')
 
   // Métricas básicas
   const hoy = new Date().toISOString().split('T')[0]
