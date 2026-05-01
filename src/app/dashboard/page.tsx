@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Header from '@/components/Header'
+import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,120 +10,135 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   // Obtener perfil
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  // Si es guardia o no tiene perfil definido, redirigir a formularios
-  if (!profile || profile?.role === 'guard') redirect('/forms')
+  // Solo redirigir si el perfil existe y el rol es guard
+  if (!profileError && profile?.role === 'guard') redirect('/forms')
 
-  // Métricas básicas
+  // KPIs
   const hoy = new Date().toISOString().split('T')[0]
   const inicioSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
-  const { count: countHoy } = await supabase
-    .from('inspecciones_contenedor')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', hoy)
+  const [
+    { count: countHoy },
+    { count: countSemana },
+    { count: countMes },
+    { count: countTotal },
+    { data: registros }
+  ] = await Promise.all([
+    supabase
+      .from('inspecciones_contenedor')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', hoy),
+    supabase
+      .from('inspecciones_contenedor')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', inicioSemana),
+    supabase
+      .from('inspecciones_contenedor')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', inicioMes),
+    supabase
+      .from('inspecciones_contenedor')
+      .select('*', { count: 'exact', head: true }),
+    supabase
+      .from('inspecciones_contenedor')
+      .select('id, form_no, created_at, placa_veh, num_contenedor, nombre_conductor, guard_id, ubicacion')
+      .order('created_at', { ascending: false })
+      .limit(50)
+  ])
 
-  const { count: countSemana } = await supabase
-    .from('inspecciones_contenedor')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', inicioSemana)
+  const kpis = [
+    { label: 'Hoy', value: countHoy ?? 0 },
+    { label: 'Esta semana', value: countSemana ?? 0 },
+    { label: 'Este mes', value: countMes ?? 0 },
+    { label: 'Total histórico', value: countTotal ?? 0 },
+  ]
 
-  const { count: countMes } = await supabase
-    .from('inspecciones_contenedor')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', inicioMes)
-
-  // Registros recientes
-  const { data: registros } = await supabase
-    .from('inspecciones_contenedor')
-    .select('id, form_no, created_at, placa_veh, num_contenedor, nombre_conductor, guard_id')
-    .order('created_at', { ascending: false })
-    .limit(20)
+  const fechaHoy = new Date().toLocaleDateString('es-CO', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  })
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
       <Header userName={user.email ?? ''} userRole={profile?.role} />
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: 'var(--text-muted)' }}>
-            Panel de Control
-          </p>
-          <h1 className="text-lg font-bold tracking-wide" style={{ color: 'var(--text)' }}>
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 16px' }}>
+
+        {/* Header visual */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{
+            fontSize: 28,
+            fontWeight: 800,
+            color: '#0B1D3A',
+            fontFamily: 'Outfit, sans-serif',
+            margin: 0,
+            lineHeight: 1.1
+          }}>
             Dashboard
           </h1>
+          <p style={{ fontSize: 13, color: '#7A90B0', marginTop: 4, fontFamily: 'Outfit, sans-serif' }}>
+            Panel de Supervisión · {fechaHoy}
+          </p>
         </div>
 
-        {/* Métricas */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {[
-            { label: 'Hoy', value: countHoy ?? 0 },
-            { label: 'Esta semana', value: countSemana ?? 0 },
-            { label: 'Este mes', value: countMes ?? 0 },
-          ].map(m => (
-            <div key={m.label} className="rounded-xl p-4 border"
-              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-              <div className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{m.value}</div>
-              <div className="text-xs tracking-wider uppercase mt-1" style={{ color: 'var(--text-muted)' }}>
+        {/* KPIs */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 16,
+          marginBottom: 28
+        }}
+          className="kpi-grid"
+        >
+          {kpis.map(m => (
+            <div key={m.label} style={{
+              background: '#fff',
+              borderRadius: 16,
+              padding: '20px 24px',
+              border: '1px solid #D0D9E8',
+              boxShadow: '0 2px 8px rgba(11,29,58,0.06)'
+            }}>
+              <div style={{
+                fontSize: 36,
+                fontWeight: 800,
+                color: '#0B1D3A',
+                fontFamily: 'monospace',
+                lineHeight: 1
+              }}>
+                {m.value}
+              </div>
+              <div style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#7A90B0',
+                marginTop: 6,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontFamily: 'Outfit, sans-serif'
+              }}>
                 {m.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Tabla registros */}
-        <div className="rounded-xl border overflow-hidden"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <div className="px-4 py-3 border-b flex items-center gap-2"
-            style={{ borderColor: 'var(--border)', background: 'rgba(30,111,255,0.08)' }}>
-            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--accent)' }}>
-              📋 Registros Recientes
-            </span>
-          </div>
-
-          {registros && registros.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Formulario', 'Fecha', 'Placa', 'Contenedor', 'Conductor'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-bold tracking-widest uppercase"
-                        style={{ color: 'var(--text-muted)' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {registros.map(r => (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}
-                      className="hover:bg-white/5 transition-colors">
-                      <td className="px-4 py-3 font-bold" style={{ color: 'var(--accent)' }}>
-                        {r.form_no || '—'}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
-                        {new Date(r.created_at).toLocaleDateString('es-CO')}
-                      </td>
-                      <td className="px-4 py-3">{r.placa_veh || '—'}</td>
-                      <td className="px-4 py-3">{r.num_contenedor || '—'}</td>
-                      <td className="px-4 py-3">{r.nombre_conductor || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="px-4 py-12 text-center text-xs tracking-wider"
-              style={{ color: 'var(--text-dim)' }}>
-              No hay registros aún
-            </div>
-          )}
-        </div>
+        {/* Dashboard client: filtros + tabla */}
+        <DashboardClient registros={registros ?? []} />
       </main>
+
+      <style>{`
+        @media (min-width: 768px) {
+          .kpi-grid {
+            grid-template-columns: repeat(4, 1fr) !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

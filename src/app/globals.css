@@ -1,41 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface-high: #22263a;
-  --border: #2e3349;
-  --accent: #1e6fff;
-  --danger: #ff3b3b;
-  --success: #00c07a;
-  --text: #e8ecf5;
-  --text-muted: #6b7394;
+  --bg: #F4F1EB;
+  --surface: #ffffff;
+  --surface-high: #F4F1EB;
+  --border: #D0D9E8;
+  --accent: #F05A28;
+  --accent-blue: #0B1D3A;
+  --danger: #DC2626;
+  --success: #15803D;
+  --text: #0B1D3A;
+  --text-muted: #7A90B0;
+  --text-dim: #A0AFC4;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Mono', 'Courier New', monospace;
+  font-family: 'Outfit', sans-serif;
 }
 
 input, textarea, select {
-  background: var(--surface-high);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 9px 12px;
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
+  background: #F4F1EB;
+  border: 1.5px solid #D0D9E8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #0B1D3A;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
   width: 100%;
   outline: none;
-  transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: var(--accent);
+  border-color: #F05A28;
 }
 
 textarea {
