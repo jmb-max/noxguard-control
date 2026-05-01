@@ -56,7 +56,7 @@ export default function LoginPage() {
             NoxGuard<span style={{ color: '#F05A28' }}>Control</span>
           </div>
           <div style={{ fontSize: 11, color: '#7A90B0', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 4 }}>
-            Sistema de Inspecciones · PSI Security
+            Sistema de Gestión Operativa
           </div>
         </div>
 

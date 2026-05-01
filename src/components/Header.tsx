@@ -22,7 +22,8 @@ export default function Header({ userName, userRole }: HeaderProps) {
   const roleLabel =
     userRole === 'admin' ? 'Administrador' :
     userRole === 'supervisor' ? 'Supervisor' :
-    userRole === 'client' ? 'Cliente' : 'Guardia'
+    userRole === 'client' ? 'Cliente' :
+    userRole === 'guard' ? 'Guarda' : null
 
   return (
     <header style={{
@@ -47,9 +48,7 @@ export default function Header({ userName, userRole }: HeaderProps) {
           <div style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', letterSpacing: '0.03em', lineHeight: 1.2 }}>
             NoxGuard<span style={{ color: '#F05A28' }}>Control</span>
           </div>
-          <div style={{ fontSize: 9, color: '#7A90B0', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            PSI Security
-          </div>
+
         </div>
       </Link>
 
@@ -78,9 +77,11 @@ export default function Header({ userName, userRole }: HeaderProps) {
           <span style={{ fontSize: 11, color: '#ffffff', fontWeight: 600, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {userName}
           </span>
-          <span style={{ fontSize: 9, color: '#F05A28', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            {roleLabel}
-          </span>
+          {roleLabel && (
+            <span style={{ fontSize: 9, color: '#F05A28', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {roleLabel}
+            </span>
+          )}
         </div>
       )}
 
