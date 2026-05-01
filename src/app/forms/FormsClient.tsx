@@ -7,16 +7,14 @@ const CATEGORIAS = [
     id: 'inspecciones', name: 'Inspecciones', icon: '🔍',
     forms: [
       { id: 'inspeccion-contenedor', name: 'Inspección de Contenedores', desc: 'Control antinarcóticos, sellos y unidad canina', active: true },
-      { id: 'insp-vehiculo', name: 'Inspección de Vehículo', desc: 'Control físico de vehículos en planta', active: false },
-      { id: 'insp-personal', name: 'Inspección de Personal', desc: 'Control de ingreso de personas', active: false },
     ]
   },
   {
     id: 'alarmas-rondas', name: 'Alarmas y Rondas', icon: '🔔',
     forms: [
       { id: 'atencion-alarmas', name: 'Atención de Alarmas', desc: 'Reporte de atención y verificación perimetral', active: true },
-      { id: 'ronda-ingenio', name: 'Ronda Patrulla / Ingenio', desc: 'Escaneo QR por escenario, riesgos y novedades', active: false },
-      { id: 'ronda-hospital', name: 'Ronda Hospital', desc: 'Control por puntos QR en instalaciones clínicas', active: false },
+      { id: 'ronda-ingenio', name: 'Ronda Patrulla Ingenio Risaralda', desc: 'Escaneo QR por escenario, riesgos y novedades', active: false },
+      { id: 'ronda-hospital', name: 'Ronda Hospital Santa Mónica', desc: 'Control por puntos QR en instalaciones clínicas', active: false },
     ]
   },
   {
@@ -28,7 +26,7 @@ const CATEGORIAS = [
   {
     id: 'vehiculos', name: 'Vehículos', icon: '🏍️',
     forms: [
-      { id: 'chequeo-moto', name: 'Chequeo de Moto', desc: 'Revisión técnica de motocicleta operativa (27 ítems)', active: true },
+      { id: 'chequeo-moto', name: 'Chequeo Para Moto', desc: 'Revisión técnica de motocicleta operativa (27 ítems)', active: true },
     ]
   },
   {
@@ -40,7 +38,7 @@ const CATEGORIAS = [
   {
     id: 'supervision', name: 'Supervisión', icon: '👁️',
     forms: [
-      { id: 'sup-diaria', name: 'Supervisión Diaria', desc: 'Reporte de puesto, vigilante y observaciones', active: false },
+      { id: 'sup-diaria', name: 'Supervisión Diaria Vigilancia Física', desc: 'Reporte de puesto, vigilante y observaciones', active: false },
       { id: 'sup-general', name: 'Supervisión General', desc: 'Armamento, comunicaciones, uniforme y actitud', active: false },
     ]
   },
