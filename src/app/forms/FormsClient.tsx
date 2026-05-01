@@ -99,7 +99,7 @@ export default function FormsClient({ userName, userRole }: Props) {
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder="Buscar formulario..."
-        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #D0D9E8', background: '#fff', fontSize: 14, fontFamily: 'Outfit, sans-serif', color: '#0B1D3A', outline: 'none', marginBottom: 14 }}
+        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #D0D9E8', background: '#fff', fontSize: 14, fontFamily: 'Outfit, sans-serif', color: '#0B1D3A', outline: 'none', marginBottom: 14, boxSizing: 'border-box' as const }}
       />
 
       {query ? (

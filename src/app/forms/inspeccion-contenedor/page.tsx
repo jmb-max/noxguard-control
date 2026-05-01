@@ -15,7 +15,7 @@ export default async function InspeccionContenedorPage() {
     .single()
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
       <Header userName={user.email ?? ''} userRole={profile?.role} />
       <InspeccionContenedorForm userId={user.id} userEmail={user.email ?? ''} />
     </div>

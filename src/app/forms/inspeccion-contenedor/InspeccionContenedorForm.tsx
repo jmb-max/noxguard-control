@@ -31,7 +31,7 @@ function Field({ label, req, children }: { label: string; req?: boolean; childre
 }
 
 function Grid2({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{children}</div>
+  return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>{children}</div>
 }
 
 function Grid3({ children }: { children: React.ReactNode }) {

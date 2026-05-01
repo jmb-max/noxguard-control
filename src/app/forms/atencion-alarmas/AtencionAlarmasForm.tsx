@@ -22,7 +22,7 @@ function Section({ num, icon, title, children }: { num: number; icon: string; ti
 function Field({ label, req, children }: { label: string; req?: boolean; children: React.ReactNode }) {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}><label style={{ fontSize: 11, fontWeight: 600, color: '#3D5277' }}>{label}{req && <span style={{ color: '#F05A28', marginLeft: 2 }}>*</span>}</label>{children}</div>
 }
-function G2({ children }: { children: React.ReactNode }) { return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{children}</div> }
+function G2({ children }: { children: React.ReactNode }) { return <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>{children}</div> }
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return <div style={{ display: 'flex', gap: 8 }}>{[true,false].map(v => <button key={String(v)} type="button" onClick={() => onChange(v)} style={{ flex: 1, padding: 10, borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700, border: `1.5px solid ${value===v?(v?'#15803D':'#DC2626'):'#D0D9E8'}`, background: value===v?(v?'#DCFCE7':'#FEE2E2'):'#F4F1EB', color: value===v?(v?'#15803D':'#DC2626'):'#7A90B0' }}>{v?'✓ SÍ':'✕ NO'}</button>)}</div>
 }
