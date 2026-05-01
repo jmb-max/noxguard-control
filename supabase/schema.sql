@@ -138,3 +138,54 @@ ALTER TABLE inspecciones_contenedor
   ADD COLUMN IF NOT EXISTS insp_tec_apellidos text,
   ADD COLUMN IF NOT EXISTS insp_tec_nombres text,
   ADD COLUMN IF NOT EXISTS insp_tec_doc text;
+
+-- Tabla alertas_riesgos
+create table if not exists alertas_riesgos (
+  id uuid default gen_random_uuid() primary key,
+  form_no text, guard_id uuid references profiles(id),
+  usuario_gestor text, fecha_elaboracion date, placa_veh text,
+  cedula_guarda text, nombre_guarda text, celular text, ubicacion text,
+  nombre_cliente text, nombre_puesto text, nombre_supervisor text, cedula_supervisor text,
+  identificacion_riesgo text, descripcion_alerta text, recomendaciones text,
+  firma text, fotos jsonb default '{}',
+  created_at timestamptz default now()
+);
+alter table alertas_riesgos enable row level security;
+create policy "guards_own_alertas" on alertas_riesgos for all using (guard_id = auth.uid());
+create policy "supervisors_alertas" on alertas_riesgos for select using (
+  exists (select 1 from profiles where id = auth.uid() and role in ('supervisor','admin'))
+);
+
+-- Tabla atencion_alarmas
+create table if not exists atencion_alarmas (
+  id uuid default gen_random_uuid() primary key,
+  form_no text, guard_id uuid references profiles(id),
+  fecha_hora timestamptz, placa_veh text, cedula_agente text, nombre_agente text,
+  celular text, ubicacion text, numero_cuenta text, nombre_cliente text,
+  direccion_cliente text, localidad text, tipo_cliente text,
+  atencion_por text, codigo_evento text, observa_novedad boolean, descripcion_novedad text,
+  reporte_revision text, fotos jsonb default '{}',
+  created_at timestamptz default now()
+);
+alter table atencion_alarmas enable row level security;
+create policy "guards_own_alarmas" on atencion_alarmas for all using (guard_id = auth.uid());
+create policy "supervisors_alarmas" on atencion_alarmas for select using (
+  exists (select 1 from profiles where id = auth.uid() and role in ('supervisor','admin'))
+);
+
+-- Tabla chequeos_moto
+create table if not exists chequeos_moto (
+  id uuid default gen_random_uuid() primary key,
+  form_no text, guard_id uuid references profiles(id),
+  fecha_hora timestamptz, placa_unidad text, cedula_agente text, nombre_agente text,
+  celular text, ubicacion text, placa_moto text, propiedad_moto text,
+  km_inicial integer, km_final integer,
+  checklist jsonb default '{}', items_nok jsonb default '[]',
+  observaciones text, fotos jsonb default '{}',
+  created_at timestamptz default now()
+);
+alter table chequeos_moto enable row level security;
+create policy "guards_own_moto" on chequeos_moto for all using (guard_id = auth.uid());
+create policy "supervisors_moto" on chequeos_moto for select using (
+  exists (select 1 from profiles where id = auth.uid() and role in ('supervisor','admin'))
+);
