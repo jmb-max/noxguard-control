@@ -83,6 +83,12 @@ export default function AtencionAlarmasForm({ userId }: Props) {
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 680, margin: '0 auto', padding: '16px 16px 80px', fontFamily: 'Outfit, sans-serif' }}>
 
+      <div style={{ marginBottom: 16 }}>
+        <a href="/forms" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0B1D3A', textDecoration: 'none' }}>
+          ← Volver a formularios
+        </a>
+      </div>
+
       <Section num={1} icon="👤" title="Datos del Agente">
         <G2>
           <Field label="Fecha y Hora"><input style={inp} type="datetime-local" value={f.fechaHoraEnviado} onChange={set('fechaHoraEnviado')} /></Field>

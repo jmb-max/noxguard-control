@@ -133,6 +133,12 @@ export default function AlertaRiesgosForm({ userId, userEmail }: Props) {
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 680, margin: '0 auto', padding: '16px 16px 80px', fontFamily: 'Outfit, sans-serif' }}>
 
+      <div style={{ marginBottom: 16 }}>
+        <a href="/forms" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0B1D3A', textDecoration: 'none' }}>
+          ← Volver a formularios
+        </a>
+      </div>
+
       <Section num={1} icon="👤" title="Datos Generales">
         <G2>
           <Field label="Usuario Gestor" req><input style={inp} value={f.usuarioGestor} onChange={set('usuarioGestor')} /></Field>

@@ -290,18 +290,27 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
     </div>
   )
 
+  const camposReq = [f.placaVeh, f.cedulaConductor, f.nombreConductor, f.numContenedor, photos.fotoNumContenedor, photos.fotoSelloBottella]
+  const progreso = Math.round((camposReq.filter(Boolean).length / camposReq.length) * 100)
+
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 680, margin: '0 auto', padding: '16px 16px 80px', fontFamily: 'Outfit, sans-serif' }}>
 
-      {/* Tipo */}
-      <div style={{ marginBottom: 14 }}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: '#7A90B0', marginBottom: 8 }}>TIPO DE INSPECCIÓN</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {[{id:'contenedor',icon:'📦',label:'Contenedores',active:true},{id:'vehiculo',icon:'🚛',label:'Vehículo',active:false},{id:'personal',icon:'👤',label:'Personal',active:false}].map(t => (
-            <div key={t.id} style={{ flex: 1, padding: '10px 8px', borderRadius: 8, textAlign: 'center', fontSize: 11, fontWeight: 700, opacity: t.active ? 1 : 0.35, border: `1.5px solid ${t.active ? '#1D6FE8' : '#D0D9E8'}`, background: t.active ? 'rgba(29,111,232,0.08)' : '#F4F1EB', color: t.active ? '#1D6FE8' : '#7A90B0' }}>
-              <span style={{ fontSize: 18, display: 'block', marginBottom: 3 }}>{t.icon}</span>{t.label}
-            </div>
-          ))}
+      {/* Botón volver */}
+      <div style={{ marginBottom: 16 }}>
+        <a href="/forms" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0B1D3A', textDecoration: 'none' }}>
+          ← Volver a formularios
+        </a>
+      </div>
+
+      {/* Barra de progreso */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#7A90B0' }}>PROGRESO</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#0B1D3A' }}>{progreso}%</span>
+        </div>
+        <div style={{ height: 6, background: '#D0D9E8', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progreso}%`, background: progreso === 100 ? '#15803D' : '#F05A28', borderRadius: 99, transition: 'width 0.3s ease' }} />
         </div>
       </div>
 
