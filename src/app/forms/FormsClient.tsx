@@ -45,7 +45,8 @@ const CATEGORIAS = [
   {
     id: 'operaciones-ara', name: 'Operaciones ARA', icon: '🏪',
     forms: [
-      { id: 'descargues-ara', name: 'Reporte de Descargues ARA', desc: 'Registro de descargue en tiendas, horarios y novedades', active: true },
+      { id: 'descargues-ara', name: 'Reporte de Descargues ARA', desc: 'Registro de descargue en tiendas, horarios y novedades', active: true, url: '' },
+      { id: 'cierres-ara', name: 'Cierres ARA', desc: 'Generador de reportes desde Softguard / Vigicontrol', active: true, url: '/tools/cierres-ara', tool: true },
     ]
   },
   {
@@ -111,7 +112,7 @@ export default function FormsClient({ userName, userRole }: Props) {
             <div style={{ background: '#fff', border: '1px solid #D0D9E8', borderRadius: 12, overflow: 'hidden' }}>
               {filteredForms.map((form, i) => (
                 form.active ? (
-                  <Link key={form.id} href={`/forms/${form.id}`}
+                  <Link key={form.id} href={(form as any).url || `/forms/${form.id}`}
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < filteredForms.length - 1 ? '1px solid #E8E3D8' : 'none', textDecoration: 'none', transition: 'background 0.15s' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#15803D', flexShrink: 0, marginLeft: 4 }} />
                     <div style={{ flex: 1 }}>
@@ -148,7 +149,7 @@ export default function FormsClient({ userName, userRole }: Props) {
               <div style={{ background: '#fff', border: '1px solid #D0D9E8', borderTop: 'none', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
                 {cat.forms.map((form, i) => (
                   form.active ? (
-                    <Link key={form.id} href={`/forms/${form.id}`}
+                    <Link key={form.id} href={(form as any).url || `/forms/${form.id}`}
                       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderBottom: i < cat.forms.length - 1 ? '1px solid #E8E3D8' : 'none', textDecoration: 'none', transition: 'background 0.15s' }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#15803D', flexShrink: 0, marginLeft: 4 }} />
                       <div style={{ flex: 1 }}>
