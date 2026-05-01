@@ -13,8 +13,8 @@ const CATEGORIAS = [
     id: 'alarmas-rondas', name: 'Alarmas y Rondas', icon: '🔔',
     forms: [
       { id: 'atencion-alarmas', name: 'Atención de Alarmas', desc: 'Reporte de atención y verificación perimetral', active: true },
-      { id: 'ronda-ingenio', name: 'Ronda Patrulla Ingenio Risaralda', desc: 'Escaneo QR por escenario, riesgos y novedades', active: false },
-      { id: 'ronda-hospital', name: 'Ronda Hospital Santa Mónica', desc: 'Control por puntos QR en instalaciones clínicas', active: false },
+      { id: 'ronda-ingenio', name: 'Ronda Patrulla Ingenio Risaralda', desc: 'Escaneo QR por escenario, riesgos y novedades', active: true },
+      { id: 'ronda-hospital', name: 'Ronda Hospital Santa Mónica', desc: 'Control por puntos QR en instalaciones clínicas', active: true },
     ]
   },
   {
@@ -32,26 +32,26 @@ const CATEGORIAS = [
   {
     id: 'armas-equipos', name: 'Armas y Equipos', icon: '🔫',
     forms: [
-      { id: 'control-armas', name: 'Control Armas y Comunicaciones', desc: 'Entrega, cambio y retiro de armamento', active: false },
+      { id: 'control-armas', name: 'Control Armas y Comunicaciones', desc: 'Entrega, cambio y retiro de armamento', active: true },
     ]
   },
   {
     id: 'supervision', name: 'Supervisión', icon: '👁️',
     forms: [
-      { id: 'sup-diaria', name: 'Supervisión Diaria Vigilancia Física', desc: 'Reporte de puesto, vigilante y observaciones', active: false },
-      { id: 'sup-general', name: 'Supervisión General', desc: 'Armamento, comunicaciones, uniforme y actitud', active: false },
+      { id: 'sup-diaria', name: 'Supervisión Diaria Vigilancia Física', desc: 'Reporte de puesto, vigilante y observaciones', active: true },
+      { id: 'sup-general', name: 'Supervisión General', desc: 'Armamento, comunicaciones, uniforme y actitud', active: true },
     ]
   },
   {
     id: 'operaciones-ara', name: 'Operaciones ARA', icon: '🏪',
     forms: [
-      { id: 'descargues-ara', name: 'Reporte de Descargues ARA', desc: 'Registro de descargue en tiendas, horarios y novedades', active: false },
+      { id: 'descargues-ara', name: 'Reporte de Descargues ARA', desc: 'Registro de descargue en tiendas, horarios y novedades', active: true },
     ]
   },
   {
     id: 'visitas', name: 'Visitas', icon: '🤝',
     forms: [
-      { id: 'visita-cliente', name: 'Visita Cliente Operativa', desc: 'Acta con asistentes, compromisos y firmas', active: false },
+      { id: 'visita-cliente', name: 'Visita Cliente Operativa', desc: 'Acta con asistentes, compromisos y firmas', active: true },
     ]
   },
 ]
