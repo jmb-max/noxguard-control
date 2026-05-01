@@ -127,3 +127,14 @@ create policy "supervisors_view_all_inspections" on inspecciones_contenedor
 -- Para cambiar un usuario a supervisor (ejecutar manualmente):
 -- update profiles set role = 'supervisor' where id = 'UUID_DEL_USUARIO';
 -- update profiles set role = 'admin' where id = 'UUID_DEL_USUARIO';
+
+-- Columnas adicionales v1.1
+ALTER TABLE inspecciones_contenedor 
+  ADD COLUMN IF NOT EXISTS sello_sticker text,
+  ADD COLUMN IF NOT EXISTS can_microchip text,
+  ADD COLUMN IF NOT EXISTS marca_vehiculo text,
+  ADD COLUMN IF NOT EXISTS placa_remolque text,
+  ADD COLUMN IF NOT EXISTS ubicacion_gps text,
+  ADD COLUMN IF NOT EXISTS insp_tec_apellidos text,
+  ADD COLUMN IF NOT EXISTS insp_tec_nombres text,
+  ADD COLUMN IF NOT EXISTS insp_tec_doc text;
