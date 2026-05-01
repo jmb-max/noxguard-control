@@ -7,7 +7,8 @@ export default async function FormsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profileRows } = await supabase.rpc('get_my_profile')
+  const profile = profileRows?.[0] ?? null
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB', fontFamily: 'Outfit, sans-serif' }}>

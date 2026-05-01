@@ -9,15 +9,12 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  // Obtener perfil
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // Obtener perfil via RPC (bypassa RLS correctamente)
+  const { data: profileRows } = await supabase.rpc('get_my_profile')
+  const profile = profileRows?.[0] ?? null
 
-  // Solo redirigir si el perfil existe y el rol es guard
-  if (!profileError && profile?.role === 'guard') redirect('/forms')
+  // Solo redirigir si el rol es explícitamente guard
+  if (profile?.role === 'guard') redirect('/forms')
 
   // KPIs
   const hoy = new Date().toISOString().split('T')[0]
