@@ -121,10 +121,91 @@ export default function AdminPage() {
 }
 
 function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({ nombre: '', email: '', password: '', rol: 'guarda' })
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      if (res.ok) {
+        setShowForm(false)
+        setFormData({ nombre: '', email: '', password: '', rol: 'guarda' })
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Usuarios</h2>
-      {usuarios.length === 0 ? (
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Usuarios</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
+        >
+          {showForm ? '✕ Cancelar' : '➕ Nuevo Usuario'}
+        </button>
+      </div>
+      {showForm && (
+        <form onSubmit={handleCreateUser} className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <input
+              placeholder="Nombre"
+              required
+              value={formData.nombre}
+              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Email"
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Contraseña"
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <select
+              value={formData.rol}
+              onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
+              className="p-2 border rounded text-sm"
+            >
+              <option value="guarda">Guarda</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="coordinador">Coordinador</option>
+              <option value="directivo">Directivo</option>
+              <option value="admin">Admin</option>
+              <option value="cliente">Cliente</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:bg-gray-400"
+          >
+            {loading ? 'Creando...' : 'Crear Usuario'}
+          </button>
+        </form>
+      )}
+      {usuarios.length === 0 && !showForm ? (
         <div className="text-center py-8 text-gray-500">No hay usuarios</div>
       ) : (
         <div className="overflow-x-auto">
