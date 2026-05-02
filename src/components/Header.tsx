@@ -24,8 +24,8 @@ export default function Header({ userName, userRole }: HeaderProps) {
     userRole === 'directivo'   ? 'Directivo' :
     userRole === 'coordinador' ? 'Coordinador' :
     userRole === 'supervisor'  ? 'Supervisor' :
-    userRole === 'client'      ? 'Cliente' :
-    userRole === 'guard'       ? 'Guarda' : null
+    userRole === 'cliente'     ? 'Cliente' :
+    userRole === 'guarda'      ? 'Guarda' : null
 
   // Navegación por rol
   const navLinks = (() => {
@@ -43,11 +43,11 @@ export default function Header({ userName, userRole }: HeaderProps) {
           { href: '/dashboard', label: 'Dashboard' },
           { href: '/forms',     label: 'Formularios' },
         ]
-      case 'client':
+      case 'cliente':
         return [
           { href: '/dashboard', label: 'Dashboard' },
         ]
-      case 'guard':
+      case 'guarda':
         return [
           { href: '/forms', label: 'Formularios' },
         ]
@@ -59,7 +59,7 @@ export default function Header({ userName, userRole }: HeaderProps) {
   // Destino del logo según rol
   const homeHref =
     userRole === 'admin' ? '/dashboard/admin' :
-    userRole === 'guard' ? '/forms' :
+    userRole === 'guarda' ? '/forms' :
     '/dashboard'
 
   return (
