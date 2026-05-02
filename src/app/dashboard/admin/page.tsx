@@ -290,10 +290,96 @@ function IaTab({ iaUsage }: { iaUsage: any[] }) {
 }
 
 function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Cliente[] }) {
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '' })
+
+  const handleCreatePuesto = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { error } = await supabase.from('puestos').insert(formData)
+      if (!error) {
+        setShowForm(false)
+        setFormData({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '' })
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Puestos</h2>
-      {puestos.length === 0 ? (
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Puestos</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
+        >
+          {showForm ? '✕ Cancelar' : '➕ Nuevo Puesto'}
+        </button>
+      </div>
+      {showForm && (
+        <form onSubmit={handleCreatePuesto} className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <input
+              placeholder="Número"
+              value={formData.numero}
+              onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Nombre"
+              required
+              value={formData.nombre}
+              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <select
+              required
+              value={formData.cliente_id}
+              onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
+              className="p-2 border rounded text-sm"
+            >
+              <option value="">Seleccionar cliente</option>
+              {clientes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+            <input
+              placeholder="Dirección"
+              value={formData.direccion}
+              onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Zona"
+              value={formData.zona}
+              onChange={(e) => setFormData({ ...formData, zona: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Ruta"
+              value={formData.ruta}
+              onChange={(e) => setFormData({ ...formData, ruta: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:bg-gray-400"
+          >
+            {loading ? 'Creando...' : 'Crear Puesto'}
+          </button>
+        </form>
+      )}
+      {puestos.length === 0 && !showForm ? (
         <div className="text-center py-8 text-gray-500">No hay puestos</div>
       ) : (
         <div className="overflow-x-auto">
@@ -332,10 +418,95 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
 }
 
 function ClientesTab({ clientes }: { clientes: Cliente[] }) {
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({ nombre: '', nit: '', tipo: 'tienda', direccion: '', ciudad: '', zona: '' })
+
+  const handleCreateCliente = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { error } = await supabase.from('clientes').insert(formData)
+      if (!error) {
+        setShowForm(false)
+        setFormData({ nombre: '', nit: '', tipo: 'tienda', direccion: '', ciudad: '', zona: '' })
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Clientes</h2>
-      {clientes.length === 0 ? (
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Clientes</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
+        >
+          {showForm ? '✕ Cancelar' : '➕ Nuevo Cliente'}
+        </button>
+      </div>
+      {showForm && (
+        <form onSubmit={handleCreateCliente} className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <input
+              placeholder="Nombre"
+              required
+              value={formData.nombre}
+              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="NIT"
+              value={formData.nit}
+              onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <select
+              value={formData.tipo}
+              onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              className="p-2 border rounded text-sm"
+            >
+              <option value="tienda">Tienda</option>
+              <option value="bodega">Bodega</option>
+              <option value="hospital">Hospital</option>
+              <option value="urbanizacion">Urbanización</option>
+              <option value="empresa">Empresa</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input
+              placeholder="Dirección"
+              value={formData.direccion}
+              onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Ciudad"
+              value={formData.ciudad}
+              onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+            <input
+              placeholder="Zona"
+              value={formData.zona}
+              onChange={(e) => setFormData({ ...formData, zona: e.target.value })}
+              className="p-2 border rounded text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:bg-gray-400"
+          >
+            {loading ? 'Creando...' : 'Crear Cliente'}
+          </button>
+        </form>
+      )}
+      {clientes.length === 0 && !showForm ? (
         <div className="text-center py-8 text-gray-500">No hay clientes</div>
       ) : (
         <div className="overflow-x-auto">
