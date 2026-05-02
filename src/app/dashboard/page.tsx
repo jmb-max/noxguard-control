@@ -9,12 +9,17 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  // Obtener perfil via RPC (bypassa RLS correctamente)
-  const { data: profileRows } = await supabase.rpc('get_my_profile')
-  const profile = profileRows?.[0] ?? null
+  // Obtener perfil directo de tabla usuarios (sin RPC que puede fallar)
+  const { data: usuarios } = await supabase
+    .from('usuarios')
+    .select('rol')
+    .eq('auth_id', user.id)
+    .single()
+  
+  const userRole = usuarios?.rol ?? null
 
-  // Solo redirigir si el rol es explícitamente guard
-  if (profile?.role === 'guard') redirect('/forms')
+  // Solo redirigir si el rol es explícitamente 'guarda'
+  if (userRole === 'guarda') redirect('/forms')
 
   // KPIs
   const hoy = new Date().toISOString().split('T')[0]
@@ -63,7 +68,7 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
-      <Header userName={user.email ?? ''} userRole={profile?.role} />
+      <Header userName={user.email ?? ''} userRole={userRole} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 16px' }}>
 
