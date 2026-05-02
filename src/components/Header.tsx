@@ -1,7 +1,6 @@
 'use client'
-
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 interface HeaderProps {
@@ -11,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ userName, userRole }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
 
   const handleLogout = async () => {
@@ -20,10 +20,47 @@ export default function Header({ userName, userRole }: HeaderProps) {
   }
 
   const roleLabel =
-    userRole === 'admin' ? 'Administrador' :
-    userRole === 'supervisor' ? 'Supervisor' :
-    userRole === 'client' ? 'Cliente' :
-    userRole === 'guard' ? 'Guarda' : null
+    userRole === 'admin'       ? 'Administrador' :
+    userRole === 'directivo'   ? 'Directivo' :
+    userRole === 'coordinador' ? 'Coordinador' :
+    userRole === 'supervisor'  ? 'Supervisor' :
+    userRole === 'client'      ? 'Cliente' :
+    userRole === 'guard'       ? 'Guarda' : null
+
+  // Navegación por rol
+  const navLinks = (() => {
+    switch (userRole) {
+      case 'admin':
+        return [
+          { href: '/dashboard/admin', label: 'Panel Admin' },
+          { href: '/dashboard',       label: 'Dashboard' },
+          { href: '/forms',           label: 'Formularios' },
+        ]
+      case 'supervisor':
+      case 'coordinador':
+      case 'directivo':
+        return [
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/forms',     label: 'Formularios' },
+        ]
+      case 'client':
+        return [
+          { href: '/dashboard', label: 'Dashboard' },
+        ]
+      case 'guard':
+        return [
+          { href: '/forms', label: 'Formularios' },
+        ]
+      default:
+        return []
+    }
+  })()
+
+  // Destino del logo según rol
+  const homeHref =
+    userRole === 'admin' ? '/dashboard/admin' :
+    userRole === 'guard' ? '/forms' :
+    '/dashboard'
 
   return (
     <header style={{
@@ -34,9 +71,8 @@ export default function Header({ userName, userRole }: HeaderProps) {
       padding: '0 16px', height: 56,
       fontFamily: 'Outfit, sans-serif',
     }}>
-
-      {/* Logo + nombre */}
-      <Link href={userRole === 'admin' || userRole === 'supervisor' ? '/dashboard' : '/forms'}
+      {/* Logo */}
+      <Link href={homeHref}
         style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10,
@@ -48,26 +84,31 @@ export default function Header({ userName, userRole }: HeaderProps) {
           <div style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', letterSpacing: '0.03em', lineHeight: 1.2 }}>
             NoxGuard<span style={{ color: '#F05A28' }}>Control</span>
           </div>
-
         </div>
       </Link>
 
-      {/* Separador */}
       <div style={{ flex: 1 }} />
 
-      {/* Nav links para admin/supervisor */}
-      {(userRole === 'admin' || userRole === 'supervisor') && (
+      {/* Nav links */}
+      {navLinks.length > 0 && (
         <div style={{ display: 'flex', gap: 4 }}>
-          <Link href="/dashboard" style={{
-            fontSize: 11, fontWeight: 600, color: '#A0AFC4',
-            textDecoration: 'none', padding: '5px 10px', borderRadius: 6,
-            letterSpacing: '0.05em', transition: 'all 0.15s',
-          }}>Dashboard</Link>
-          <Link href="/forms" style={{
-            fontSize: 11, fontWeight: 600, color: '#A0AFC4',
-            textDecoration: 'none', padding: '5px 10px', borderRadius: 6,
-            letterSpacing: '0.05em', transition: 'all 0.15s',
-          }}>Formularios</Link>
+          {navLinks.map(({ href, label }) => {
+            const isActive = pathname === href
+            return (
+              <Link key={href} href={href} style={{
+                fontSize: 11, fontWeight: 600,
+                color: isActive ? '#ffffff' : '#A0AFC4',
+                textDecoration: 'none',
+                padding: '5px 10px', borderRadius: 6,
+                letterSpacing: '0.05em',
+                background: isActive ? 'rgba(240,90,40,0.15)' : 'transparent',
+                borderBottom: isActive ? '2px solid #F05A28' : '2px solid transparent',
+                transition: 'all 0.15s',
+              }}>
+                {label}
+              </Link>
+            )
+          })}
         </div>
       )}
 
