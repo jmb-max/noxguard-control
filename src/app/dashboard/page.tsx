@@ -3,144 +3,166 @@ import { redirect } from 'next/navigation'
 import Header from '@/components/Header'
 import DashboardClient from './DashboardClient'
 
-export default async function DashboardPage() {
+/**
+ * Dashboard agnóstico — lee de v_eventos_unificados (vista que une las 11 tablas
+ * de formularios) en lugar de inspecciones_contenedor solamente.
+ *
+ * Filtros server-side aplicados aquí (vía URLSearchParams):
+ *   - desde / hasta  (date range sobre fecha)
+ *   - cliente_id     (filtrar por cliente)
+ *   - puesto_id      (filtrar por puesto, depende de cliente)
+ *   - tipos          (multi-select de tipo_evento, separado por coma)
+ *   - autor_id       (guard / supervisor / coordinator)
+ *   - novedad        ('si' = solo con novedad)
+ *   - q              (buscar por placa o resumen)
+ *
+ * Listas para los filtros (clientes, puestos, autores, tipos) se cargan también
+ * server-side y se pasan como props al cliente.
+ */
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
-  // Obtener perfil directo de tabla usuarios (sin RPC que puede fallar)
+  // Perfil del usuario (rol)
   const { data: usuarios } = await supabase
     .from('usuarios')
     .select('rol')
     .eq('auth_id', user.id)
     .single()
-  
   const userRole = usuarios?.rol ?? null
 
-  // Solo redirigir si el rol es explícitamente 'guarda'
+  // Guardas van a /forms (no ven dashboard agregado)
   if (userRole === 'guarda') redirect('/forms')
 
-  // KPIs
+  // ─── Parsear filtros desde la URL ────────────────────────────────────────
+  const sp = await searchParams
+  const get = (k: string) => {
+    const v = sp[k]
+    return Array.isArray(v) ? v[0] : v
+  }
+  const f = {
+    desde: get('desde') ?? '',
+    hasta: get('hasta') ?? '',
+    cliente_id: get('cliente_id') ?? '',
+    puesto_id: get('puesto_id') ?? '',
+    tipos: (get('tipos') ?? '').split(',').filter(Boolean),
+    autor_id: get('autor_id') ?? '',
+    novedad: get('novedad') ?? '', // 'si' | ''
+    q: get('q') ?? '',
+  }
+
+  // ─── Construir query base con filtros aplicados ──────────────────────────
+  // Helper: aplica los filtros comunes a una query de Supabase (post-select)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyFilters = (q: any) => {
+    if (f.desde) q = q.gte('fecha', f.desde)
+    if (f.hasta) {
+      // Hasta inclusive: agregar 23:59:59 al hasta
+      const hastaEnd = `${f.hasta}T23:59:59.999Z`
+      q = q.lte('fecha', hastaEnd)
+    }
+    if (f.cliente_id) q = q.eq('cliente_id', f.cliente_id)
+    if (f.puesto_id) q = q.eq('puesto_id', f.puesto_id)
+    if (f.tipos.length) q = q.in('tipo_evento', f.tipos)
+    if (f.autor_id) q = q.eq('autor_id', f.autor_id)
+    if (f.novedad === 'si') q = q.eq('tiene_novedad', true)
+    if (f.q) {
+      // Busca en placa o resumen
+      q = q.or(`placa.ilike.%${f.q}%,resumen.ilike.%${f.q}%`)
+    }
+    return q
+  }
+
+  // ─── KPIs (5 conteos: hoy, semana, mes, total, novedades) ────────────────
   const hoy = new Date().toISOString().split('T')[0]
   const inicioSemana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
+  // Aplicamos los filtros activos a los KPIs (excepto los de tiempo, que se sustituyen por el rango del KPI)
+  const kpiBase = () => {
+    let q = supabase.from('v_eventos_unificados').select('*', { count: 'exact', head: true })
+    if (f.cliente_id) q = q.eq('cliente_id', f.cliente_id)
+    if (f.puesto_id) q = q.eq('puesto_id', f.puesto_id)
+    if (f.tipos.length) q = q.in('tipo_evento', f.tipos)
+    if (f.autor_id) q = q.eq('autor_id', f.autor_id)
+    return q
+  }
+
+  // ─── Datos maestros para filtros (clientes, puestos, autores, tipos) ─────
   const [
     { count: countHoy },
     { count: countSemana },
     { count: countMes },
     { count: countTotal },
-    { data: registros }
+    { count: countNovedades },
+    { data: rows },
+    { count: rowsCount },
+    { data: clientes },
+    { data: puestos },
+    { data: autores },
   ] = await Promise.all([
-    supabase
-      .from('inspecciones_contenedor')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', hoy),
-    supabase
-      .from('inspecciones_contenedor')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', inicioSemana),
-    supabase
-      .from('inspecciones_contenedor')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', inicioMes),
-    supabase
-      .from('inspecciones_contenedor')
-      .select('*', { count: 'exact', head: true }),
-    supabase
-      .from('inspecciones_contenedor')
-      .select('id, form_no, created_at, placa_veh, num_contenedor, nombre_conductor, guard_id, ubicacion')
-      .order('created_at', { ascending: false })
-      .limit(50)
+    kpiBase().gte('fecha', hoy),
+    kpiBase().gte('fecha', inicioSemana),
+    kpiBase().gte('fecha', inicioMes),
+    kpiBase(),
+    kpiBase().eq('tiene_novedad', true),
+    applyFilters(
+      supabase
+        .from('v_eventos_unificados')
+        .select('*')
+    )
+      .order('fecha', { ascending: false, nullsFirst: false })
+      .limit(100),
+    applyFilters(
+      supabase
+        .from('v_eventos_unificados')
+        .select('*', { count: 'exact', head: true })
+    ),
+    supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
+    supabase.from('puestos').select('id, nombre, cliente_id, numero').eq('activo', true).order('nombre'),
+    supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
   ])
 
   const kpis = [
-    { label: 'Hoy', value: countHoy ?? 0 },
-    { label: 'Esta semana', value: countSemana ?? 0 },
-    { label: 'Este mes', value: countMes ?? 0 },
-    { label: 'Total histórico', value: countTotal ?? 0 },
+    { label: 'Hoy', value: countHoy ?? 0, kpiKey: 'hoy' },
+    { label: 'Esta semana', value: countSemana ?? 0, kpiKey: 'semana' },
+    { label: 'Este mes', value: countMes ?? 0, kpiKey: 'mes' },
+    { label: 'Total', value: countTotal ?? 0, kpiKey: 'total' },
+    { label: 'Novedades', value: countNovedades ?? 0, kpiKey: 'novedades', alert: (countNovedades ?? 0) > 0 },
   ]
 
   const fechaHoy = new Date().toLocaleDateString('es-CO', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
       <Header userName={user.email ?? ''} userRole={userRole} />
-
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 16px' }}>
-
-        {/* Header visual */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{
-            fontSize: 28,
-            fontWeight: 800,
-            color: '#0B1D3A',
-            fontFamily: 'Outfit, sans-serif',
-            margin: 0,
-            lineHeight: 1.1
-          }}>
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 16px' }}>
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0B1D3A', fontFamily: 'Outfit, sans-serif', margin: 0, lineHeight: 1.1 }}>
             Dashboard
           </h1>
           <p style={{ fontSize: 13, color: '#7A90B0', marginTop: 4, fontFamily: 'Outfit, sans-serif' }}>
-            Panel de Supervisión · {fechaHoy}
+            Panel de Operaciones · {fechaHoy}
           </p>
         </div>
 
-        {/* KPIs */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 16,
-          marginBottom: 28
-        }}
-          className="kpi-grid"
-        >
-          {kpis.map(m => (
-            <div key={m.label} style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: '20px 24px',
-              border: '1px solid #D0D9E8',
-              boxShadow: '0 2px 8px rgba(11,29,58,0.06)'
-            }}>
-              <div style={{
-                fontSize: 36,
-                fontWeight: 800,
-                color: '#0B1D3A',
-                fontFamily: 'monospace',
-                lineHeight: 1
-              }}>
-                {m.value}
-              </div>
-              <div style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: '#7A90B0',
-                marginTop: 6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontFamily: 'Outfit, sans-serif'
-              }}>
-                {m.label}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Dashboard client: filtros + tabla */}
-        <DashboardClient registros={registros ?? []} />
+        <DashboardClient
+          rows={rows ?? []}
+          totalRows={rowsCount ?? 0}
+          kpis={kpis}
+          clientes={clientes ?? []}
+          puestos={puestos ?? []}
+          autores={autores ?? []}
+          activeFilters={f}
+        />
       </main>
-
-      <style>{`
-        @media (min-width: 768px) {
-          .kpi-grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }
