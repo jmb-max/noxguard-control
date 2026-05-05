@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -59,6 +60,7 @@ const EVENTOS_LABELS: Record<string, string> = {
 export default function SupGeneralForm({ userId }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const now = new Date()
@@ -92,7 +94,10 @@ export default function SupGeneralForm({ userId }: Props) {
   const progreso = Math.round(req.filter(Boolean).length / req.length * 100)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const { error } = await supabase.from('supervision_general').insert({
       form_no: formNo, supervisor_id: userId,
       fecha_hora: f.fechaHora, placa_unidad: f.placaUnidad,
@@ -126,6 +131,7 @@ export default function SupGeneralForm({ userId }: Props) {
         fotoEvidencia: photos.fotoEvidencia?.name || null,
         fotoPresentacion: photos.fotoPresentacion?.name || null,
       },
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -161,7 +167,9 @@ export default function SupGeneralForm({ userId }: Props) {
         </div>
       </div>
 
-      <Section num={1} icon="👤" title="Datos del Supervisor">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos del Supervisor">
         <G2>
           <Field label="Fecha y Hora"><input style={inp} type="datetime-local" value={f.fechaHora} onChange={set('fechaHora')} /></Field>
           <Field label="Placa Unidad" req><input style={inp} value={f.placaUnidad} onChange={up('placaUnidad')} placeholder="NUX271" /></Field>

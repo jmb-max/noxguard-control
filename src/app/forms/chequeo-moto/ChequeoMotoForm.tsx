@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -63,6 +64,7 @@ function PhotoField({ id, label, value, onChange }: { id: string; label: string;
 export default function ChequeoMotoForm({ userId }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const now = new Date(); const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
@@ -88,7 +90,10 @@ export default function ChequeoMotoForm({ userId }: Props) {
   const okCount = CHECK_ITEMS.length - nokItems.length
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const { error } = await supabase.from('chequeos_moto').insert({
       form_no: formNo, guard_id: userId,
       fecha_hora: f.fechaHora, placa_unidad: f.placaUnidad, cedula_agente: f.cedulaAgente,
@@ -100,6 +105,7 @@ export default function ChequeoMotoForm({ userId }: Props) {
       items_nok: nokItems,
       observaciones: f.observaciones,
       fotos: { moto1: photos.fotoMoto1?.name || null, km: photos.fotoKilometraje?.name || null, placa: photos.fotoPlacaMoto?.name || null },
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -149,7 +155,9 @@ export default function ChequeoMotoForm({ userId }: Props) {
         </div>
       )})()}
 
-      <Section num={1} icon="👤" title="Datos del Agente">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos del Agente">
         <G2>
           <Field label="Fecha y Hora"><input style={inp} type="datetime-local" value={f.fechaHora} onChange={set('fechaHora')} /></Field>
           <Field label="Placa Unidad (Halcon)" req><input style={inp} value={f.placaUnidad} onChange={up('placaUnidad')} placeholder="HAL001" /></Field>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -36,6 +37,7 @@ function PhotoField({ id, label, value, onChange }: { id: string; label: string;
 export default function AtencionAlarmasForm({ userId }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const now = new Date(); const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16)
@@ -53,7 +55,10 @@ export default function AtencionAlarmasForm({ userId }: Props) {
   const sp = (k: string) => (v: Photo | null) => setPhotos(p => ({ ...p, [k]: v }))
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const { error } = await supabase.from('atencion_alarmas').insert({
       form_no: formNo, guard_id: userId,
       fecha_hora: f.fechaHoraEnviado, placa_veh: f.placaVeh, cedula_agente: f.cedulaAgente,
@@ -61,9 +66,10 @@ export default function AtencionAlarmasForm({ userId }: Props) {
       numero_cuenta: f.numeroCuenta, nombre_cliente: f.nombreCliente,
       direccion_cliente: f.direccionCliente, localidad: f.localidad, tipo_cliente: f.tipoCliente,
       atencion_por: f.atencionPor, codigo_evento: f.codigoEvento,
-      observa_novedad: f.observaNovedad, descripcion_novedad: f.descripcionNovedad,
+      observa_novedad: f.observaNovedad,
       reporte_revision: f.reporteRevision,
       fotos: { foto1: photos.fotoAlarma1?.name || null, foto2: photos.fotoAlarma2?.name || null },
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -108,7 +114,9 @@ export default function AtencionAlarmasForm({ userId }: Props) {
         </div>
       )})()}
 
-      <Section num={1} icon="👤" title="Datos del Agente">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos del Agente">
         <G2>
           <Field label="Fecha y Hora"><input style={inp} type="datetime-local" value={f.fechaHoraEnviado} onChange={set('fechaHoraEnviado')} /></Field>
           <Field label="Placa" req><input style={inp} value={f.placaVeh} onChange={up('placaVeh')} placeholder="NUX271" /></Field>

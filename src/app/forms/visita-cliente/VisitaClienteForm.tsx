@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 interface Asistente { nombre: string; cargo: string; foto: { preview: string; name: string } | null }
@@ -35,6 +36,7 @@ function PhotoField({ id, label, value, onChange }: { id: string; label: string;
 export default function VisitaClienteForm({ userId }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const now = new Date()
@@ -63,7 +65,10 @@ export default function VisitaClienteForm({ userId }: Props) {
     setCompromisos(p => p.map((c, idx) => idx === i ? { ...c, [k]: v } : c))
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const asistentesData = asistentes.map(a => ({ nombre: a.nombre, cargo: a.cargo, foto: a.foto?.name || null }))
     const { error } = await supabase.from('visita_cliente').insert({
       form_no: formNo, coordinator_id: userId,
@@ -78,6 +83,7 @@ export default function VisitaClienteForm({ userId }: Props) {
       observaciones: f.observaciones,
       calificacion_servicio: f.calificacionServicio ? parseFloat(f.calificacionServicio) : null,
       fotos: { fotoVisita1: photos.fotoVisita1?.name || null, fotoVisita2: photos.fotoVisita2?.name || null },
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -113,7 +119,9 @@ export default function VisitaClienteForm({ userId }: Props) {
         </div>
       </div>
 
-      <Section num={1} icon="👤" title="Datos del Coordinador">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos del Coordinador">
         <G2>
           <Field label="Fecha/Hora Inicio"><input style={inp} type="datetime-local" value={f.fechaHoraInicio} onChange={set('fechaHoraInicio')} /></Field>
           <Field label="Fecha/Hora Final"><input style={inp} type="datetime-local" value={f.fechaHoraFinal} onChange={set('fechaHoraFinal')} /></Field>

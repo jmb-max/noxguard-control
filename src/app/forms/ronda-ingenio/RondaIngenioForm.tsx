@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -36,6 +37,7 @@ function PhotoField({ id, label, value, onChange }: { id: string; label: string;
 export default function RondaIngenioForm({ userId }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const now = new Date()
@@ -81,7 +83,10 @@ export default function RondaIngenioForm({ userId }: Props) {
   const clearFirma = () => { const canvas = canvasRef.current; if (!canvas) return; canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height); setHasFirma(false) }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const firmaData = hasFirma ? canvasRef.current?.toDataURL() : null
     const { error } = await supabase.from('ronda_ingenio').insert({
       form_no: formNo, guard_id: userId,
@@ -93,6 +98,7 @@ export default function RondaIngenioForm({ userId }: Props) {
       observaciones_generales: f.observacionesGenerales,
       fotos: { fotoEscenario: photos.fotoEscenario?.name || null, fotoAdicional: photos.fotoAdicional?.name || null },
       firma: firmaData ? 'firmado' : null,
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -128,7 +134,9 @@ export default function RondaIngenioForm({ userId }: Props) {
         </div>
       </div>
 
-      <Section num={1} icon="👤" title="Datos del Agente">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos del Agente">
         <G2>
           <Field label="Fecha y Hora"><input style={inp} type="datetime-local" value={f.fechaHora} onChange={set('fechaHora')} /></Field>
           <Field label="Placa Unidad" req><input style={inp} value={f.placaUnidad} onChange={up('placaUnidad')} placeholder="NUX271" /></Field>

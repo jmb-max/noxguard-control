@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -135,6 +136,7 @@ const ta: React.CSSProperties = { ...inp, minHeight: 72, resize: 'vertical' as c
 export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -237,7 +239,10 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const firmaData = hasFirma ? canvasRef.current?.toDataURL() : null
     const photoMeta: Record<string, string> = {}
     Object.entries(photos).forEach(([k, v]) => { if (v) photoMeta[k] = v.name })
@@ -268,8 +273,7 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
       fecha_salida: f.fechaSalida, guia_responsable: f.guiaResponsable,
       fotos: { ...photoMeta, firma: firmaData ? 'firmado' : 'sin-firma' },
       ubicacion_gps: gpsCoords ? `${gpsCoords.lat},${gpsCoords.lng}` : null,
-      coords_lat: gpsCoords?.lat ?? null,
-      coords_lng: gpsCoords?.lng ?? null,
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -321,6 +325,8 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
           <div style={{ height: '100%', width: `${progreso}%`, background: progreso === 100 ? '#15803D' : '#F05A28', borderRadius: 99, transition: 'width 0.3s ease' }} />
         </div>
       </div>
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+
 
       {/* 1 - DATOS GENERALES */}
       <Section num={1} icon="👤" title="Datos Generales">

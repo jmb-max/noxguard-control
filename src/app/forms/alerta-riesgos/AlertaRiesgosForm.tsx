@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ContextoOperativo, { EMPTY_CONTEXTO, validarContexto, type ContextoValue } from '@/components/ContextoOperativo'
 
 interface Props { userId: string; userEmail: string }
 
@@ -62,6 +63,7 @@ function PhotoField({ id, label, value, onChange }: { id: string; label: string;
 export default function AlertaRiesgosForm({ userId, userEmail }: Props) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<ContextoValue>(EMPTY_CONTEXTO)
   const [submitted, setSubmitted] = useState(false)
   const [formNo] = useState(`No.${Math.floor(Math.random() * 9000) + 1000}`)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -102,7 +104,10 @@ export default function AlertaRiesgosForm({ userId, userEmail }: Props) {
   const clearFirma = () => { const c = canvasRef.current; if (!c) return; c.getContext('2d')?.clearRect(0, 0, c.width, c.height); setHasFirma(false) }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault();
+    const ctxErr = validarContexto(ctx)
+    if (ctxErr) { alert(ctxErr); return }
+    setLoading(true)
     const { error } = await supabase.from('alertas_riesgos').insert({
       form_no: formNo, guard_id: userId,
       usuario_gestor: f.usuarioGestor, fecha_elaboracion: f.fechaElaboracion,
@@ -114,6 +119,7 @@ export default function AlertaRiesgosForm({ userId, userEmail }: Props) {
       recomendaciones: f.recomendaciones,
       firma: hasFirma ? 'firmado' : 'sin-firma',
       fotos: { foto1: photos.fotoRiesgo1?.name || null, foto2: photos.fotoRiesgo2?.name || null },
+      ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
@@ -158,7 +164,9 @@ export default function AlertaRiesgosForm({ userId, userEmail }: Props) {
         </div>
       )})()}
 
-      <Section num={1} icon="👤" title="Datos Generales">
+      
+      <ContextoOperativo value={ctx} onChange={setCtx} />
+<Section num={1} icon="👤" title="Datos Generales">
         <G2>
           <Field label="Usuario Gestor" req><input style={inp} value={f.usuarioGestor} onChange={set('usuarioGestor')} /></Field>
           <Field label="Fecha Elaboración"><input style={inp} type="date" value={f.fechaElaboracion} onChange={set('fechaElaboracion')} /></Field>
