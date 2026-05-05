@@ -165,6 +165,11 @@ export default async function DashboardPage({
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
+  // Extraer rows de las respuestas RPC (exec_sql devuelve { ok, rows })
+  const rowsDia   = (graficaDia  as any)?.rows  as EventoDia[]  ?? []
+  const rowsTipo  = (graficaTipo as any)?.rows  as EventoTipo[] ?? []
+  const rowsHeat  = (graficaHeat as any)?.rows  as HeatmapCell[] ?? []
+
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
       <Header userName={user.email ?? ''} userRole={userRole} />
@@ -186,9 +191,9 @@ export default async function DashboardPage({
           puestos={puestos ?? []}
           autores={autores ?? []}
           activeFilters={f}
-          eventosPorDia={((graficaDia as any)?.rows ?? []) as EventoDia[]}
-          eventosPorTipo={((graficaTipo as any)?.rows ?? []) as EventoTipo[]}
-          heatmap={((graficaHeat as any)?.rows ?? []) as HeatmapCell[]}
+          eventosPorDia={rowsDia}
+          eventosPorTipo={rowsTipo}
+          heatmap={rowsHeat}
         />
       </main>
     </div>
