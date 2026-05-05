@@ -159,21 +159,21 @@ export default async function DashboardPage({
     supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
     supabase.from('puestos').select('id, nombre, cliente_id, numero, coords_lat, coords_lng').eq('activo', true).order('nombre'),
     supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
-    // F3 — datos para gráficas (usa chat_query que tiene permisos para authenticated)
-    supabase.rpc('chat_query', { sql: `
+    // F3 — datos para gráficas (usa chat_query con p_sql, permisos para authenticated)
+    supabase.rpc('chat_query', { p_sql: `
       SELECT DATE(fecha) as dia, tipo_evento, tipo_label, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       WHERE fecha >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(fecha), tipo_evento, tipo_label
       ORDER BY dia ASC
     `}),
-    supabase.rpc('chat_query', { sql: `
+    supabase.rpc('chat_query', { p_sql: `
       SELECT tipo_evento, tipo_label, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       GROUP BY tipo_evento, tipo_label
       ORDER BY total DESC
     `}),
-    supabase.rpc('chat_query', { sql: `
+    supabase.rpc('chat_query', { p_sql: `
       SELECT EXTRACT(DOW FROM fecha)::int as dow, EXTRACT(HOUR FROM fecha)::int as hora, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       WHERE fecha IS NOT NULL
