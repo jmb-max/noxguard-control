@@ -32,6 +32,8 @@ export interface Puesto {
   cliente_id?: string
   zona?: string
   ruta?: string
+  coords_lat?: number | null
+  coords_lng?: number | null
   activo: boolean
   created_at: string
 }

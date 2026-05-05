@@ -368,22 +368,48 @@ function ClientesTab({ clientes }: { clientes: Cliente[] }) {
 function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Cliente[] }) {
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '' })
+  const [formData, setFormData] = useState({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '', coords_lat: '', coords_lng: '' })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<{ coords_lat: string; coords_lng: string }>({ coords_lat: '', coords_lng: '' })
+  const [editLoading, setEditLoading] = useState(false)
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const { error } = await supabase.from('puestos').insert(formData)
+      const payload = {
+        ...formData,
+        coords_lat: formData.coords_lat ? parseFloat(formData.coords_lat) : null,
+        coords_lng: formData.coords_lng ? parseFloat(formData.coords_lng) : null,
+      }
+      const { error } = await supabase.from('puestos').insert(payload)
       if (!error) {
         setShowForm(false)
-        setFormData({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '' })
+        setFormData({ numero: '', nombre: '', cliente_id: '', direccion: '', zona: '', ruta: '', coords_lat: '', coords_lng: '' })
         window.location.reload()
       }
     } catch (err) {
       console.error('Error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEditCoords = async (id: string) => {
+    setEditLoading(true)
+    try {
+      const { error } = await supabase.from('puestos').update({
+        coords_lat: editData.coords_lat ? parseFloat(editData.coords_lat) : null,
+        coords_lng: editData.coords_lng ? parseFloat(editData.coords_lng) : null,
+      }).eq('id', id)
+      if (!error) {
+        setEditingId(null)
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Error al guardar coords:', err)
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -421,6 +447,10 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
               value={formData.zona} onChange={e => setFormData({ ...formData, zona: e.target.value })} />
             <input style={inputStyle} placeholder="Ruta"
               value={formData.ruta} onChange={e => setFormData({ ...formData, ruta: e.target.value })} />
+            <input style={inputStyle} placeholder="Latitud GPS (ej: 4.6097)"
+              value={formData.coords_lat} onChange={e => setFormData({ ...formData, coords_lat: e.target.value })} />
+            <input style={inputStyle} placeholder="Longitud GPS (ej: -74.0817)"
+              value={formData.coords_lng} onChange={e => setFormData({ ...formData, coords_lng: e.target.value })} />
           </div>
           <button type="submit" disabled={loading} style={{ ...btnSecondary, opacity: loading ? 0.6 : 1 }}>
             {loading ? 'Creando...' : 'Crear Puesto'}
@@ -437,7 +467,7 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #D0D9E8' }}>
-                {['Número', 'Nombre', 'Cliente', 'Zona', 'Ruta', 'Activo'].map(h => (
+                {['Número', 'Nombre', 'Cliente', 'Zona', 'Ruta', 'GPS', 'Activo', ''].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -452,7 +482,62 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
                   </td>
                   <td style={{ ...tdStyle, color: '#7A90B0', fontSize: 12 }}>{p.zona || '—'}</td>
                   <td style={{ ...tdStyle, color: '#7A90B0', fontSize: 12 }}>{p.ruta || '—'}</td>
+                  <td style={{ ...tdStyle, fontSize: 11 }}>
+                    {editingId === p.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
+                        <input
+                          style={{ ...inputStyle, padding: '4px 8px', fontSize: 11 }}
+                          placeholder="Lat (ej: 4.6097)"
+                          value={editData.coords_lat}
+                          onChange={e => setEditData({ ...editData, coords_lat: e.target.value })}
+                        />
+                        <input
+                          style={{ ...inputStyle, padding: '4px 8px', fontSize: 11 }}
+                          placeholder="Lng (ej: -74.0817)"
+                          value={editData.coords_lng}
+                          onChange={e => setEditData({ ...editData, coords_lng: e.target.value })}
+                        />
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            onClick={() => handleEditCoords(p.id)}
+                            disabled={editLoading}
+                            style={{ ...btnSecondary, padding: '4px 10px', fontSize: 11, opacity: editLoading ? 0.6 : 1 }}
+                          >
+                            {editLoading ? '...' : '✓ Guardar'}
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            style={{ background: 'none', border: '1px solid #D0D9E8', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer', color: '#7A90B0' }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span style={{ color: (p as any).coords_lat ? '#22C55E' : '#A0AFC4' }}>
+                        {(p as any).coords_lat
+                          ? `${Number((p as any).coords_lat).toFixed(4)}, ${Number((p as any).coords_lng).toFixed(4)}`
+                          : '— sin GPS'}
+                      </span>
+                    )}
+                  </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>{p.activo ? '✅' : '❌'}</td>
+                  <td style={{ ...tdStyle }}>
+                    {editingId !== p.id && (
+                      <button
+                        onClick={() => {
+                          setEditingId(p.id)
+                          setEditData({
+                            coords_lat: (p as any).coords_lat?.toString() ?? '',
+                            coords_lng: (p as any).coords_lng?.toString() ?? '',
+                          })
+                        }}
+                        style={{ background: 'none', border: '1px solid #D0D9E8', borderRadius: 6, padding: '4px 10px', fontSize: 11, cursor: 'pointer', color: '#0B1D3A', fontWeight: 600 }}
+                      >
+                        📍 GPS
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
