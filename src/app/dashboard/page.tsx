@@ -124,7 +124,7 @@ export default async function DashboardPage({
         .select('*', { count: 'exact', head: true })
     ),
     supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
-    supabase.from('puestos').select('id, nombre, cliente_id, numero').eq('activo', true).order('nombre'),
+    supabase.from('puestos').select('id, nombre, cliente_id, numero, coords_lat, coords_lng').eq('activo', true).order('nombre'),
     supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
   ])
 

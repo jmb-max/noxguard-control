@@ -10,9 +10,14 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import dynamic from 'next/dynamic'
+import FeedEnVivo from '@/components/FeedEnVivo'
+
+// Leaflet requiere ssr:false — accede al DOM en el top-level
+const MapaPuestos = dynamic(() => import('@/components/MapaPuestos'), { ssr: false })
 
 interface Cliente { id: string; nombre: string; zona: string | null }
-interface Puesto  { id: string; nombre: string; cliente_id: string | null; numero: string | null }
+interface Puesto  { id: string; nombre: string; cliente_id: string | null; numero: string | null; coords_lat?: number | null; coords_lng?: number | null }
 interface Autor   { id: string; auth_id: string | null; nombre: string | null; email: string | null; rol: string | null }
 
 interface Evento {
@@ -204,6 +209,40 @@ export default function DashboardClient(p: Props) {
             </div>
           </button>
         ))}
+      </div>
+
+      {/* ── Zona 3: Mapa + Feed en vivo (60/40) ──────────────────── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '60% 40%',
+        gap: 16,
+        marginBottom: 20,
+        height: 380,
+      }}>
+        {/* Mapa */}
+        <div style={{
+          border: '1px solid #D0D9E8',
+          borderRadius: 14,
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(11,29,58,0.06)',
+          background: '#E8E3D8',
+        }}>
+          <MapaPuestos
+            puestos={p.puestos}
+            clientes={p.clientes}
+            eventos={p.rows}
+            onPuestoClick={(puestoId, clienteId) => {
+              apply({ puesto_id: puestoId, cliente_id: clienteId ?? '' })
+            }}
+          />
+        </div>
+
+        {/* Feed en vivo */}
+        <FeedEnVivo
+          clientes={p.clientes}
+          puestos={p.puestos}
+          autores={p.autores}
+        />
       </div>
 
       {/* ── Filtros ──────────────────────────────────────────────── */}
