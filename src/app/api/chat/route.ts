@@ -167,11 +167,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Solo se permiten consultas de lectura' }, { status: 400 })
       }
 
-      const { data, error } = await supabase.rpc('exec_sql', { sql })
+      const { data, error } = await supabase.rpc('chat_query', { p_sql: sql })
       if (error) {
         sqlError = error.message
       } else {
-        rows = (data as any)?.rows ?? []
+        // chat_query devuelve json_agg directamente (array o null)
+        rows = Array.isArray(data) ? data : []
       }
     }
 
