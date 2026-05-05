@@ -194,10 +194,16 @@ export default async function DashboardPage({
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // Extraer rows de las respuestas RPC (chat_query devuelve array directo)
-  const rowsDia   = (Array.isArray(graficaDia)  ? graficaDia  : []) as EventoDia[]
-  const rowsTipo  = (Array.isArray(graficaTipo) ? graficaTipo : []) as EventoTipo[]
-  const rowsHeat  = (Array.isArray(graficaHeat) ? graficaHeat : []) as HeatmapCell[]
+  // Extraer rows — chat_query devuelve json (Postgres), el SDK lo entrega como string o array
+  // Necesitamos parsear si es string
+  const parseRpc = (data: unknown) => {
+    if (Array.isArray(data)) return data
+    if (typeof data === 'string') { try { return JSON.parse(data) } catch { return [] } }
+    return []
+  }
+  const rowsDia   = parseRpc(graficaDia)  as EventoDia[]
+  const rowsTipo  = parseRpc(graficaTipo) as EventoTipo[]
+  const rowsHeat  = parseRpc(graficaHeat) as HeatmapCell[]
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
