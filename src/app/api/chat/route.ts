@@ -6,7 +6,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // ── Límites por rol (espejo de la función SQL) ─────────────────────────────
 const LIMITES: Record<string, number> = {
-  admin: 999, directivo: 30, coordinador: 20, supervisor: 10, cliente: 5, guarda: 0,
+  admin: 10, directivo: 10, coordinador: 5, supervisor: 5, cliente: 5, guarda: 0,
 }
 
 // ── Botones rápidos predefinidos ───────────────────────────────────────────
