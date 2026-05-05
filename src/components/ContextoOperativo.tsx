@@ -175,34 +175,55 @@ export default function ContextoOperativo({ value, onChange, requiereNovedad = f
         </div>
 
         {/* GPS */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 12px', background: '#F4F1EB',
-          border: '1px solid #D0D9E8', borderRadius: 8, marginBottom: 14,
-        }}>
-          <span style={{ fontSize: 16 }}>📍</span>
-          <div style={{ flex: 1, fontSize: 12 }}>
-            {gpsState === 'idle' && <span style={{ color: '#7A90B0' }}>Sin ubicación capturada</span>}
-            {gpsState === 'loading' && <span style={{ color: '#7A90B0' }}>Obteniendo ubicación...</span>}
-            {gpsState === 'ok' && value.coords_lat !== null && (
-              <span style={{ color: '#15803D', fontWeight: 600 }}>
-                ✓ {value.coords_lat.toFixed(5)}, {value.coords_lng?.toFixed(5)}
-              </span>
-            )}
-            {gpsState === 'error' && (
-              <span style={{ color: '#DC2626', fontWeight: 600 }}>✕ {gpsError}</span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={captureGPS}
-            style={{
-              fontSize: 11, padding: '6px 12px', borderRadius: 6,
-              border: '1px solid #D0D9E8', background: '#fff', color: '#0B1D3A',
-              fontWeight: 600, cursor: 'pointer',
-            }}>
-            {gpsState === 'ok' ? 'Recapturar' : 'Capturar GPS'}
-          </button>
+        <div style={{ marginBottom: 14 }}>
+          {gpsState === 'ok' && value.coords_lat !== null ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#15803D', marginBottom: 8 }}>
+                📍 Ubicación capturada
+              </div>
+              <div style={{
+                background: '#F4F1EB', border: '1px solid #D0D9E8',
+                borderRadius: 8, padding: '10px 16px', display: 'inline-block', marginBottom: 10,
+              }}>
+                <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#0B1D3A' }}>
+                  {value.coords_lat.toFixed(6)}, {value.coords_lng?.toFixed(6)}
+                </span>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={captureGPS}
+                  style={{
+                    background: 'none', border: '1px solid #D0D9E8', borderRadius: 8,
+                    padding: '6px 16px', fontSize: 12, cursor: 'pointer', color: '#7A90B0',
+                    fontFamily: 'Outfit, sans-serif',
+                  }}>
+                  Actualizar ubicación
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              {gpsState === 'error' && (
+                <div style={{ fontSize: 11, color: '#DC2626', fontWeight: 600, marginBottom: 8 }}>
+                  ✕ {gpsError}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={captureGPS}
+                disabled={gpsState === 'loading'}
+                style={{
+                  width: '100%', padding: '12px 24px',
+                  background: gpsState === 'loading' ? '#7A90B0' : '#0B1D3A',
+                  border: 'none', borderRadius: 8, color: '#fff',
+                  fontSize: 13, fontWeight: 700, cursor: gpsState === 'loading' ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Outfit, sans-serif', transition: 'background 0.2s',
+                }}>
+                {gpsState === 'loading' ? '📡 Obteniendo ubicación...' : '📍 Capturar Ubicación GPS'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Novedad */}

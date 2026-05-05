@@ -395,6 +395,36 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
     }
   }
 
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeError, setGeocodeError] = useState('')
+
+  const geocodeAddress = async (direccion: string, ciudad = 'Colombia') => {
+    if (!direccion.trim()) return
+    setGeocoding(true)
+    setGeocodeError('')
+    try {
+      const query = encodeURIComponent(`${direccion}, ${ciudad}`)
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
+        { headers: { 'Accept-Language': 'es', 'User-Agent': 'NoxGuardControl/1.0' } }
+      )
+      const data = await res.json()
+      if (data.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          coords_lat: parseFloat(data[0].lat).toFixed(6),
+          coords_lng: parseFloat(data[0].lon).toFixed(6),
+        }))
+      } else {
+        setGeocodeError('Dirección no encontrada — ingresa coords manualmente')
+      }
+    } catch {
+      setGeocodeError('Error de red — ingresa coords manualmente')
+    } finally {
+      setGeocoding(false)
+    }
+  }
+
   const handleEditCoords = async (id: string) => {
     setEditLoading(true)
     try {
@@ -443,13 +473,26 @@ function PuestosTab({ puestos, clientes }: { puestos: Puesto[]; clientes: Client
             </select>
             <input style={inputStyle} placeholder="Dirección"
               value={formData.direccion} onChange={e => setFormData({ ...formData, direccion: e.target.value })} />
+            <button
+              type="button"
+              onClick={() => geocodeAddress(formData.direccion)}
+              disabled={geocoding || !formData.direccion.trim()}
+              style={{ ...inputStyle, background: geocoding ? '#7A90B0' : '#0B1D3A', color: '#fff', border: 'none', cursor: geocoding || !formData.direccion.trim() ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: !formData.direccion.trim() ? 0.5 : 1 }}
+            >
+              {geocoding ? '🔍 Buscando...' : '🔍 Buscar coords'}
+            </button>
+            {geocodeError && (
+              <div style={{ gridColumn: '1/-1', fontSize: 11, color: '#DC2626', fontWeight: 600 }}>
+                ⚠️ {geocodeError}
+              </div>
+            )}
             <input style={inputStyle} placeholder="Zona"
               value={formData.zona} onChange={e => setFormData({ ...formData, zona: e.target.value })} />
             <input style={inputStyle} placeholder="Ruta"
               value={formData.ruta} onChange={e => setFormData({ ...formData, ruta: e.target.value })} />
-            <input style={inputStyle} placeholder="Latitud GPS (ej: 4.6097)"
+            <input style={inputStyle} placeholder="Latitud (auto o manual)"
               value={formData.coords_lat} onChange={e => setFormData({ ...formData, coords_lat: e.target.value })} />
-            <input style={inputStyle} placeholder="Longitud GPS (ej: -74.0817)"
+            <input style={inputStyle} placeholder="Longitud (auto o manual)"
               value={formData.coords_lng} onChange={e => setFormData({ ...formData, coords_lng: e.target.value })} />
           </div>
           <button type="submit" disabled={loading} style={{ ...btnSecondary, opacity: loading ? 0.6 : 1 }}>
