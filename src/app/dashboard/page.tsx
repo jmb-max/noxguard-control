@@ -131,21 +131,21 @@ export default async function DashboardPage({
     supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
     supabase.from('puestos').select('id, nombre, cliente_id, numero, coords_lat, coords_lng').eq('activo', true).order('nombre'),
     supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
-    // F3 — datos para gráficas
-    supabase.rpc('exec_sql', { sql: `
+    // F3 — datos para gráficas (usa chat_query que tiene permisos para authenticated)
+    supabase.rpc('chat_query', { sql: `
       SELECT DATE(fecha) as dia, tipo_evento, tipo_label, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       WHERE fecha >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(fecha), tipo_evento, tipo_label
       ORDER BY dia ASC
     `}),
-    supabase.rpc('exec_sql', { sql: `
+    supabase.rpc('chat_query', { sql: `
       SELECT tipo_evento, tipo_label, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       GROUP BY tipo_evento, tipo_label
       ORDER BY total DESC
     `}),
-    supabase.rpc('exec_sql', { sql: `
+    supabase.rpc('chat_query', { sql: `
       SELECT EXTRACT(DOW FROM fecha)::int as dow, EXTRACT(HOUR FROM fecha)::int as hora, COUNT(*)::int as total
       FROM public.v_eventos_unificados
       WHERE fecha IS NOT NULL
@@ -166,10 +166,10 @@ export default async function DashboardPage({
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // Extraer rows de las respuestas RPC (exec_sql devuelve { ok, rows })
-  const rowsDia   = (graficaDia  as any)?.rows  as EventoDia[]  ?? []
-  const rowsTipo  = (graficaTipo as any)?.rows  as EventoTipo[] ?? []
-  const rowsHeat  = (graficaHeat as any)?.rows  as HeatmapCell[] ?? []
+  // Extraer rows de las respuestas RPC (chat_query devuelve array directo)
+  const rowsDia   = (Array.isArray(graficaDia)  ? graficaDia  : []) as EventoDia[]
+  const rowsTipo  = (Array.isArray(graficaTipo) ? graficaTipo : []) as EventoTipo[]
+  const rowsHeat  = (Array.isArray(graficaHeat) ? graficaHeat : []) as HeatmapCell[]
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F1EB' }}>
