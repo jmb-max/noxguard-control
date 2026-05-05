@@ -47,10 +47,12 @@ interface ActiveFilters {
   hasta: string
   cliente_id: string
   puesto_id: string
+  zona: string
   tipos: string[]
   autor_id: string
   novedad: string
   q: string
+  isClienteRestringido: boolean
 }
 
 interface Props {
@@ -64,6 +66,8 @@ interface Props {
   eventosPorDia: EventoDia[]
   eventosPorTipo: EventoTipo[]
   heatmap: HeatmapCell[]
+  userRole: string
+  isClienteRestringido: boolean
 }
 
 const TIPOS_EVENTO = [
@@ -108,12 +112,23 @@ export default function DashboardClient(p: Props) {
   }
 
   const limpiar = () => {
-    setDraft({ desde: '', hasta: '', cliente_id: '', puesto_id: '', tipos: [], autor_id: '', novedad: '', q: '' })
-    startTransition(() => router.push(pathname))
+    // Si el cliente está restringido, limpiar solo mantiene el cliente_id forzado
+    const base: ActiveFilters = { desde: '', hasta: '', cliente_id: '', puesto_id: '', zona: '', tipos: [], autor_id: '', novedad: '', q: '', isClienteRestringido: p.isClienteRestringido }
+    if (p.isClienteRestringido) base.cliente_id = p.activeFilters.cliente_id
+    setDraft(base)
+    if (p.isClienteRestringido) {
+      const params = new URLSearchParams()
+      params.set('cliente_id', p.activeFilters.cliente_id)
+      startTransition(() => router.push(`${pathname}?${params}`))
+    } else {
+      startTransition(() => router.push(pathname))
+    }
   }
 
-  const hayFiltros = !!(p.activeFilters.desde || p.activeFilters.hasta || p.activeFilters.cliente_id ||
-    p.activeFilters.puesto_id || p.activeFilters.tipos.length || p.activeFilters.autor_id ||
+  const hayFiltros = !!(p.activeFilters.desde || p.activeFilters.hasta ||
+    (p.activeFilters.cliente_id && !p.isClienteRestringido) ||
+    p.activeFilters.puesto_id || p.activeFilters.zona ||
+    p.activeFilters.tipos.length || p.activeFilters.autor_id ||
     p.activeFilters.novedad || p.activeFilters.q)
 
   // Puestos del cliente seleccionado (cascading)
@@ -182,6 +197,48 @@ export default function DashboardClient(p: Props) {
 
   return (
     <div style={{ opacity: pending ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+
+      {/* ── Badge de rol + scope activo (F4) ─────────────────────── */}
+      {p.userRole && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <span style={{
+            background: p.userRole === 'admin' ? '#0B1D3A' :
+                        p.userRole === 'directivo' ? '#1E40AF' :
+                        p.userRole === 'coordinador' ? '#065F46' :
+                        p.userRole === 'supervisor' ? '#92400E' :
+                        p.userRole === 'cliente' ? '#7C3AED' : '#4B5563',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '3px 10px',
+            borderRadius: 20,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontFamily: 'Outfit, sans-serif',
+          }}>
+            {p.userRole === 'admin' ? '⚙️ Admin' :
+             p.userRole === 'directivo' ? '👔 Directivo' :
+             p.userRole === 'coordinador' ? '📋 Coordinador' :
+             p.userRole === 'supervisor' ? '🔍 Supervisor' :
+             p.userRole === 'cliente' ? '🏢 Cliente' : p.userRole}
+          </span>
+          {p.isClienteRestringido && p.activeFilters.cliente_id && (
+            <span style={{
+              background: '#F3F0FF',
+              color: '#7C3AED',
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '3px 10px',
+              borderRadius: 20,
+              fontFamily: 'Outfit, sans-serif',
+              border: '1px solid #DDD6FE',
+            }}>
+              📍 {p.clientes.find(c => c.id === p.activeFilters.cliente_id)?.nombre ?? 'Tu empresa'}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ── KPIs ─────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         {p.kpis.map(k => (
@@ -279,19 +336,22 @@ export default function DashboardClient(p: Props) {
 
         {/* Nivel 2: LUGAR */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-          <div>
-            <Label>Cliente</Label>
-            <select
-              style={inp}
-              value={draft.cliente_id}
-              onChange={e => apply({ cliente_id: e.target.value, puesto_id: '' })}
-            >
-              <option value="">Todos los clientes</option>
-              {p.clientes.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre}{c.zona ? ` · ${c.zona}` : ''}</option>
-              ))}
-            </select>
-          </div>
+          {/* Selector de cliente: oculto para rol cliente (tiene scope forzado) */}
+          {!p.isClienteRestringido && (
+            <div>
+              <Label>Cliente</Label>
+              <select
+                style={inp}
+                value={draft.cliente_id}
+                onChange={e => apply({ cliente_id: e.target.value, puesto_id: '' })}
+              >
+                <option value="">Todos los clientes</option>
+                {p.clientes.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}{c.zona ? ` · ${c.zona}` : ''}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <Label>Puesto</Label>
             <select

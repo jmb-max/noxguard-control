@@ -30,13 +30,15 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Perfil del usuario (rol)
-  const { data: usuarios } = await supabase
+  // Perfil del usuario (rol + asignaciones para F4)
+  const { data: usuarioPerfil } = await supabase
     .from('usuarios')
-    .select('rol')
+    .select('id, rol, zona, cliente_id')
     .eq('auth_id', user.id)
     .single()
-  const userRole = usuarios?.rol ?? null
+  const userRole = usuarioPerfil?.rol ?? null
+  const userZona = usuarioPerfil?.zona ?? null
+  const userClienteId = (usuarioPerfil as any)?.cliente_id ?? null
 
   // Guardas van a /forms (no ven dashboard agregado)
   if (userRole === 'guarda') redirect('/forms')
@@ -47,15 +49,40 @@ export default async function DashboardPage({
     const v = sp[k]
     return Array.isArray(v) ? v[0] : v
   }
+
+  // ─── F4: defaultFilters por rol ──────────────────────────────────────────
+  // Si el usuario no pasó filtros explícitos en la URL, aplicar scope por rol:
+  //   cliente    → forzar cliente_id al suyo (no puede ver otros)
+  //   supervisor → pre-seleccionar su zona (puede cambiar manualmente)
+  //   coordinador con cliente_id → pre-seleccionar su cliente
+  //   admin/directivo → sin restricciones
+  const urlClienteId = get('cliente_id') ?? ''
+  const urlZona = get('zona') ?? ''
+
+  const defaultClienteId: string =
+    userRole === 'cliente' && userClienteId
+      ? userClienteId                         // forzado, no overrideable
+      : userRole === 'coordinador' && userClienteId && !urlClienteId
+        ? userClienteId                       // precargado, puede cambiar
+        : urlClienteId
+
+  const defaultZona: string =
+    userRole === 'supervisor' && userZona && !urlZona
+      ? userZona   // precargado, puede cambiar
+      : urlZona
+
   const f = {
     desde: get('desde') ?? '',
     hasta: get('hasta') ?? '',
-    cliente_id: get('cliente_id') ?? '',
+    cliente_id: defaultClienteId,
     puesto_id: get('puesto_id') ?? '',
+    zona: defaultZona,
     tipos: (get('tipos') ?? '').split(',').filter(Boolean),
     autor_id: get('autor_id') ?? '',
     novedad: get('novedad') ?? '', // 'si' | ''
     q: get('q') ?? '',
+    // Metadatos de scope para el cliente
+    isClienteRestringido: userRole === 'cliente' && !!userClienteId,
   }
 
   // ─── Construir query base con filtros aplicados ──────────────────────────
@@ -70,6 +97,7 @@ export default async function DashboardPage({
     }
     if (f.cliente_id) q = q.eq('cliente_id', f.cliente_id)
     if (f.puesto_id) q = q.eq('puesto_id', f.puesto_id)
+    if (f.zona) q = q.eq('zona', f.zona)
     if (f.tipos.length) q = q.in('tipo_evento', f.tipos)
     if (f.autor_id) q = q.eq('autor_id', f.autor_id)
     if (f.novedad === 'si') q = q.eq('tiene_novedad', true)
@@ -195,6 +223,8 @@ export default async function DashboardPage({
           eventosPorDia={rowsDia}
           eventosPorTipo={rowsTipo}
           heatmap={rowsHeat}
+          userRole={userRole ?? ''}
+          isClienteRestringido={f.isClienteRestringido}
         />
       </main>
 
