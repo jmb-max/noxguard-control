@@ -142,9 +142,6 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [signing, setSigning] = useState(false)
   const [hasFirma, setHasFirma] = useState(false)
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [gpsLoading, setGpsLoading] = useState(false)
-
   // campos texto
   const [f, setF] = useState({
     usuarioGestor: userEmail, fechaElaboracion: new Date().toISOString().split('T')[0],
@@ -192,16 +189,6 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
   const tog = (k: string) => (v: boolean) => setF(p => ({ ...p, [k]: v }))
 
   const photoCount = Object.values(photos).filter(Boolean).length
-
-  // GPS
-  const captureGPS = () => {
-    setGpsLoading(true)
-    navigator.geolocation.getCurrentPosition(
-      pos => { setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGpsLoading(false) },
-      () => setGpsLoading(false),
-      { timeout: 10000 }
-    )
-  }
 
   // Firma digital
   useEffect(() => {
@@ -272,7 +259,6 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
       responsable_llenado: f.responsableLlenado, doc_responsable: f.docResponsable, obs_final: f.obsFinal,
       fecha_salida: f.fechaSalida, guia_responsable: f.guiaResponsable,
       fotos: { ...photoMeta, firma: firmaData ? 'firmado' : 'sin-firma' },
-      ubicacion_gps: gpsCoords ? `${gpsCoords.lat},${gpsCoords.lng}` : null,
       ...ctx,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
@@ -508,30 +494,6 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
               {hasFirma && <button type="button" onClick={clearFirma} style={{ background: 'none', border: '1px solid #D0D9E8', borderRadius: 6, padding: '3px 10px', fontSize: 11, cursor: 'pointer', color: '#7A90B0' }}>Limpiar</button>}
             </div>
           </Field>
-        </div>
-      </Section>
-
-      {/* 11 - GPS */}
-      <Section num={11} icon="📍" title="Ubicación GPS">
-        <div style={{ textAlign: 'center', padding: '8px 0' }}>
-          {gpsCoords ? (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#0B1D3A', marginBottom: 8 }}>📍 Coordenadas capturadas</div>
-              <div style={{ background: '#F4F1EB', border: '1px solid #D0D9E8', borderRadius: 8, padding: '10px 16px', display: 'inline-block' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#0B1D3A' }}>
-                  {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
-                </span>
-              </div>
-              <button type="button" onClick={captureGPS} style={{ display: 'block', margin: '10px auto 0', background: 'none', border: '1px solid #D0D9E8', borderRadius: 8, padding: '6px 16px', fontSize: 12, cursor: 'pointer', color: '#7A90B0' }}>
-                Actualizar ubicación
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={captureGPS} disabled={gpsLoading}
-              style={{ padding: '12px 24px', background: '#0B1D3A', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              {gpsLoading ? '📡 Obteniendo ubicación...' : '📍 Capturar Ubicación GPS'}
-            </button>
-          )}
         </div>
       </Section>
 
