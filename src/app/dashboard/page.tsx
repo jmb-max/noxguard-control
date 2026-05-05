@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Header from '@/components/Header'
 import DashboardClient from './DashboardClient'
+import ChatIA from '@/components/ChatIA'
 import type { EventoDia, EventoTipo, HeatmapCell } from '@/components/GraficasZona5'
 
 /**
@@ -196,6 +197,9 @@ export default async function DashboardPage({
           heatmap={rowsHeat}
         />
       </main>
+
+      {/* Chat IA flotante */}
+      <ChatIA userRol={userRole ?? ''} userName={user.email ?? ''} />
     </div>
   )
 }
