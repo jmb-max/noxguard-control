@@ -159,27 +159,51 @@ export default async function DashboardPage({
     supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
     supabase.from('puestos').select('id, nombre, cliente_id, numero, coords_lat, coords_lng').eq('activo', true).order('nombre'),
     supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
-    // F3 — datos para gráficas (usa chat_query con p_sql, permisos para authenticated)
-    supabase.rpc('chat_query', { p_sql: `
-      SELECT DATE(fecha) as dia, tipo_evento, tipo_label, COUNT(*)::int as total
-      FROM public.v_eventos_unificados
-      WHERE fecha >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(fecha), tipo_evento, tipo_label
-      ORDER BY dia ASC
-    `}),
-    supabase.rpc('chat_query', { p_sql: `
-      SELECT tipo_evento, tipo_label, COUNT(*)::int as total
-      FROM public.v_eventos_unificados
-      GROUP BY tipo_evento, tipo_label
-      ORDER BY total DESC
-    `}),
-    supabase.rpc('chat_query', { p_sql: `
-      SELECT EXTRACT(DOW FROM fecha)::int as dow, EXTRACT(HOUR FROM fecha)::int as hora, COUNT(*)::int as total
-      FROM public.v_eventos_unificados
-      WHERE fecha IS NOT NULL
-      GROUP BY dow, hora
-      ORDER BY dow, hora
-    `}),
+    // F3 — datos para gráficas: fetch directo con service_role (bypasa el cliente de sesión)
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+      body: JSON.stringify({ sql: `
+        SELECT DATE(fecha)::text as dia, tipo_evento, tipo_label, COUNT(*)::int as total
+        FROM public.v_eventos_unificados
+        WHERE fecha >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(fecha), tipo_evento, tipo_label
+        ORDER BY dia ASC
+      `}),
+    }).then(r => r.json()),
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+      body: JSON.stringify({ sql: `
+        SELECT tipo_evento, tipo_label, COUNT(*)::int as total
+        FROM public.v_eventos_unificados
+        GROUP BY tipo_evento, tipo_label
+        ORDER BY total DESC
+      `}),
+    }).then(r => r.json()),
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+      body: JSON.stringify({ sql: `
+        SELECT EXTRACT(DOW FROM fecha)::int as dow, EXTRACT(HOUR FROM fecha)::int as hora, COUNT(*)::int as total
+        FROM public.v_eventos_unificados
+        WHERE fecha IS NOT NULL
+        GROUP BY dow, hora
+        ORDER BY dow, hora
+      `}),
+    }).then(r => r.json()),
   ])
 
   const kpis = [
@@ -194,11 +218,13 @@ export default async function DashboardPage({
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // Extraer rows — chat_query devuelve json (Postgres), el SDK lo entrega como string o array
-  // Necesitamos parsear si es string
+  // Extraer rows — exec_sql via fetch devuelve { ok: true, rows: [...] }
   const parseRpc = (data: unknown) => {
     if (Array.isArray(data)) return data
-    if (typeof data === 'string') { try { return JSON.parse(data) } catch { return [] } }
+    if (data && typeof data === 'object' && 'rows' in data) {
+      const rows = (data as any).rows
+      return Array.isArray(rows) ? rows : []
+    }
     return []
   }
   const rowsDia   = parseRpc(graficaDia)  as EventoDia[]
