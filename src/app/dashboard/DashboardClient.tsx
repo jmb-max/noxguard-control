@@ -12,6 +12,7 @@ import { useState, useTransition, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import FeedEnVivo from '@/components/FeedEnVivo'
+import GraficasZona5, { type EventoDia, type EventoTipo, type HeatmapCell } from '@/components/GraficasZona5'
 
 // Leaflet requiere ssr:false — accede al DOM en el top-level
 const MapaPuestos = dynamic(() => import('@/components/MapaPuestos'), { ssr: false })
@@ -60,6 +61,9 @@ interface Props {
   puestos: Puesto[]
   autores: Autor[]
   activeFilters: ActiveFilters
+  eventosPorDia: EventoDia[]
+  eventosPorTipo: EventoTipo[]
+  heatmap: HeatmapCell[]
 }
 
 const TIPOS_EVENTO = [
@@ -454,6 +458,14 @@ export default function DashboardClient(p: Props) {
           </div>
         )}
       </div>
+
+      {/* ── Zona 5: Gráficas ─────────────────────────────────────── */}
+      <GraficasZona5
+        eventosPorDia={p.eventosPorDia}
+        eventosPorTipo={p.eventosPorTipo}
+        heatmap={p.heatmap}
+      />
+
     </div>
   )
 }

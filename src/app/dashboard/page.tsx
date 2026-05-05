@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Header from '@/components/Header'
 import DashboardClient from './DashboardClient'
+import type { EventoDia, EventoTipo, HeatmapCell } from '@/components/GraficasZona5'
 
 /**
  * Dashboard agnóstico — lee de v_eventos_unificados (vista que une las 11 tablas
@@ -105,6 +106,9 @@ export default async function DashboardPage({
     { data: clientes },
     { data: puestos },
     { data: autores },
+    { data: graficaDia },
+    { data: graficaTipo },
+    { data: graficaHeat },
   ] = await Promise.all([
     kpiBase().gte('fecha', hoy),
     kpiBase().gte('fecha', inicioSemana),
@@ -126,6 +130,27 @@ export default async function DashboardPage({
     supabase.from('clientes').select('id, nombre, zona').eq('activo', true).order('nombre'),
     supabase.from('puestos').select('id, nombre, cliente_id, numero, coords_lat, coords_lng').eq('activo', true).order('nombre'),
     supabase.from('usuarios').select('id, auth_id, nombre, email, rol').eq('activo', true).order('email'),
+    // F3 — datos para gráficas
+    supabase.rpc('exec_sql', { sql: `
+      SELECT DATE(fecha) as dia, tipo_evento, tipo_label, COUNT(*)::int as total
+      FROM public.v_eventos_unificados
+      WHERE fecha >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(fecha), tipo_evento, tipo_label
+      ORDER BY dia ASC
+    `}),
+    supabase.rpc('exec_sql', { sql: `
+      SELECT tipo_evento, tipo_label, COUNT(*)::int as total
+      FROM public.v_eventos_unificados
+      GROUP BY tipo_evento, tipo_label
+      ORDER BY total DESC
+    `}),
+    supabase.rpc('exec_sql', { sql: `
+      SELECT EXTRACT(DOW FROM fecha)::int as dow, EXTRACT(HOUR FROM fecha)::int as hora, COUNT(*)::int as total
+      FROM public.v_eventos_unificados
+      WHERE fecha IS NOT NULL
+      GROUP BY dow, hora
+      ORDER BY dow, hora
+    `}),
   ])
 
   const kpis = [
@@ -161,6 +186,9 @@ export default async function DashboardPage({
           puestos={puestos ?? []}
           autores={autores ?? []}
           activeFilters={f}
+          eventosPorDia={((graficaDia as any)?.rows ?? []) as EventoDia[]}
+          eventosPorTipo={((graficaTipo as any)?.rows ?? []) as EventoTipo[]}
+          heatmap={((graficaHeat as any)?.rows ?? []) as HeatmapCell[]}
         />
       </main>
     </div>
