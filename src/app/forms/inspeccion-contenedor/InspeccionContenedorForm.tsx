@@ -268,6 +268,8 @@ export default function InspeccionContenedorForm({ userId, userEmail }: Props) {
       fecha_salida: f.fechaSalida, guia_responsable: f.guiaResponsable,
       fotos: { ...photoMeta, firma: firmaData ? 'firmado' : 'sin-firma' },
       ubicacion_gps: gpsCoords ? `${gpsCoords.lat},${gpsCoords.lng}` : null,
+      coords_lat: gpsCoords?.lat ?? null,
+      coords_lng: gpsCoords?.lng ?? null,
     })
     if (error) { alert('Error: ' + error.message); setLoading(false) }
     else { setSubmitted(true); setLoading(false) }
